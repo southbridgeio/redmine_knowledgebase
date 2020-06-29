@@ -47,7 +47,7 @@ This version of the plugin is adapted for Redmine 4.0-stable (Rails 5.2.2) and w
 
 To install the knowledgebase, execute the following commands from the root of your redmine directory, assuming that your RAILS_ENV enviroment variable is set to "production":
 
-    git clone git://github.com/alexbevi/redmine_knowledgebase.git plugins/redmine_knowledgebase
+    git clone git://github.com/southbridgeio/redmine_knowledgebase.git plugins/redmine_knowledgebase
     bundle install
     rake redmine:plugins:migrate NAME=redmine_knowledgebase
 
@@ -62,7 +62,7 @@ To update redmine from v2.3.0 to 3.0+ you will first want to delete ``redmine_kn
 
 Once those two directories have been removed, run the following commands (as though you were performing a fresh installation):
 
-    git clone git://github.com/alexbevi/redmine_knowledgebase.git plugins/redmine_knowledgebase
+    git clone git://github.com/southbridgeio/redmine_knowledgebase.git plugins/redmine_knowledgebase
     bundle install
     rake redmine:plugins:migrate NAME=redmine_knowledgebase
   
