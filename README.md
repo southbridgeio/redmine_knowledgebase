@@ -1,3 +1,7 @@
+# MAINTAINER NEEDED
+
+The Redmine Knowledgebase is still receiving pull requests and issues, but does not have an active maintainer. I (@alexbevi) stepped away a number of years ago, and Robert (@robspearman) stepped in and took over. It's been a couple years now and Robert's availability is diminished so we're on the lookout for a new steward for the project. If you're interested shoot me an email at alex@alexbevi.com.
+
 # Redmine Knowledgebase Plugin
 
 ![](screenshots/tiled-articles-201801.jpg "Screenshot of tiled view option.")
@@ -8,6 +12,8 @@ This plugin adds professional knowledgebase functionality to the [Redmine](http:
 
 ## Recent Changes
 
+* Redmine 4.1.x support (thanks @Reshetov!)
+* No longer conflicts with Redmine CRM plugin.
 * Tiled visual indexes are now supported using thumbnails.
 * Articles are better formatted to work with more themes.
 * Tag logic is improved and critical tags can be defined easily.
@@ -16,7 +22,9 @@ This plugin adds professional knowledgebase functionality to the [Redmine](http:
 
 ## Warnings
 
-This version of the plugin is adapted for Redmine 4.0-stable (Rails 5.2.2) and won't work on earlier Redmine versions.
+The latest version of this plugin is for Redmine 4.1.x. If you're still using an older Redmine, checkout tag v3.2.2 for Redmine 3.x or even the ancient `redmine-2.x` branch.
+
+As of 4.1.x, this plugin can now coexist with the Redmine CRM plugin.
 
 ## Introduction
 
@@ -28,7 +36,7 @@ This version of the plugin is adapted for Redmine 4.0-stable (Rails 5.2.2) and w
 
 [Redmine](http://www.redmine.org) is just plain awesome, and has proven to provide 90% of the functionality I need. The one feature that was missing was a usable knowledgebase component. I've looked at some of the open source solutions available, but couldn't find anything that fit my needs exactly. Seeing as Redmine is so easily extended, I figured why not create it for this platform instead of starting yet another project from scratch :P
 
-**SHAMELESS PLUG** This plugin is discussed in [Redmine Plugin Extension and Development](http://www.packtpub.com/redmine-plugin-extension-and-development/book), which is now available from Packt Publishing. 
+**SHAMELESS PLUG** This plugin is discussed in [Redmine Plugin Extension and Development](https://www.packtpub.com/product/redmine-plugin-extension-and-development/9781783288748), which is now available from Packt Publishing. 
 
 ## Features
 
@@ -47,7 +55,7 @@ This version of the plugin is adapted for Redmine 4.0-stable (Rails 5.2.2) and w
 
 To install the knowledgebase, execute the following commands from the root of your redmine directory, assuming that your RAILS_ENV enviroment variable is set to "production":
 
-    git clone git://github.com/southbridgeio/redmine_knowledgebase.git plugins/redmine_knowledgebase
+    git clone git://github.com/alexbevi/redmine_knowledgebase.git plugins/redmine_knowledgebase
     bundle install
     rake redmine:plugins:migrate NAME=redmine_knowledgebase
 
@@ -62,7 +70,7 @@ To update redmine from v2.3.0 to 3.0+ you will first want to delete ``redmine_kn
 
 Once those two directories have been removed, run the following commands (as though you were performing a fresh installation):
 
-    git clone git://github.com/southbridgeio/redmine_knowledgebase.git plugins/redmine_knowledgebase
+    git clone git://github.com/alexbevi/redmine_knowledgebase.git plugins/redmine_knowledgebase
     bundle install
     rake redmine:plugins:migrate NAME=redmine_knowledgebase
   
@@ -237,6 +245,5 @@ Now that categories and articles have been created, the home page of the Knowled
 * Released under the MIT license.  See LICENSE file.
 * Copyright (c) 2010-2016 Alex Bevilacqua, original author.
 * Modifications (c) 2016-2018 Rob Spearman.
-* Redmine 4 adaptation (c) 2018 Southbridge
 
 This plugin would not be possible without the many contributions from the community. See [AUTHORS](https://github.com/alexbevi/redmine_knowledgebase/blob/master/AUTHORS) for the full list.

@@ -1,17 +1,11 @@
-require 'redmine'
-require 'redmine_acts_as_taggable_on/initialize'
-
-Rails.configuration.to_prepare do
-  Redmine::Activity.register :kb_articles
-  Redmine::Search.available_search_types << 'kb_articles'
+unless Rails.try(:autoloaders).try(:zeitwerk_enabled?)
+  require 'redmine_knowledgebase'
 end
 
-ActiveSupport::Reloader.to_prepare do
-  require 'macros'
-  require 'concerns/knowledgebase_project_extension'
-  Project.send :include, KnowledgebaseProjectExtension
-  SettingsHelper.send :include, KnowledgebaseSettingsHelper
-end
+ActiveRecord::Base.send :include, RedmineKnowledgebase::Acts::Rated
+ActiveRecord::Base.send :include, RedmineKnowledgebase::Acts::Versioned
+ActiveRecord::Base.send :include, RedmineKnowledgebase::Acts::Viewed
+ActiveRecord::Base.send :include, RedmineKnowledgebase::Acts::Taggable
 
 Redmine::Plugin.register :redmine_knowledgebase do
   name        'Knowledgebase'
@@ -19,10 +13,9 @@ Redmine::Plugin.register :redmine_knowledgebase do
   author_url  "http://www.alexbevi.com"
   description 'A plugin for Redmine that adds knowledgebase functionality'
   url         'https://github.com/southbridgeio/redmine_knowledgebase'
-  version     '4.0.0'
+  version     '5.0.0'
 
-  requires_redmine :version_or_higher => '3.0.0'
-  requires_acts_as_taggable_on
+  requires_redmine :version_or_higher => '4.0.0'
 
   # Do not set any default boolean settings to true or will override user false setting!
   settings :default => {
@@ -94,8 +87,4 @@ Redmine::Plugin.register :redmine_knowledgebase do
 
   menu :project_menu, :articles, { :controller => 'articles', :action => 'index' }, :caption => :knowledgebase_title, :after => :activity, :param => :project_id
 
-end
-
-class RedmineKnowledgebaseHookListener < Redmine::Hook::ViewListener
-  render_on :view_layouts_base_html_head, :inline => "<%= stylesheet_link_tag 'knowledgebase', :plugin => :redmine_knowledgebase %>"
 end

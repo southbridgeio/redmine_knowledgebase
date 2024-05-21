@@ -19,7 +19,7 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-module ActiveRecord #:nodoc:
+module RedmineKnowledgebase #:nodoc:
   module Acts #:nodoc:
 
     # == acts_as_viewed
@@ -52,13 +52,13 @@ module ActiveRecord #:nodoc:
     #
     #
     module Viewed
-     
+
       class ViewedError < RuntimeError; end
-      
+
       def self.included(base) #:nodoc:
-        base.extend(ClassMethods)  
+        base.extend(ClassMethods)
       end
-      
+
       module ClassMethods
 
         # Make the model viewable. 
@@ -81,28 +81,28 @@ module ActiveRecord #:nodoc:
         #   
         def acts_as_viewed(options = {})
           # don't allow multiple calls
-          return if self.included_modules.include?(ActiveRecord::Acts::Viewed::ViewMethods)
-          send :include, ActiveRecord::Acts::Viewed::ViewMethods
-                    
+          return if self.included_modules.include?(RedmineKnowledgebase::Acts::Viewed::ViewMethods)
+          send :include, RedmineKnowledgebase::Acts::Viewed::ViewMethods
+
           # Create the model for ratings if it doesn't yet exist
           viewing_class = options[:viewing_class] || 'Viewing'
           viewer_class  = options[:viewer_class]  || 'User'
 
           unless Object.const_defined?(viewing_class)
             Object.class_eval <<-EOV
-              class #{viewing_class} < ActiveRecord::Base
-                belongs_to :viewed, :polymorphic => true
-                belongs_to :viewer, :class_name => '#{viewer_class}', :foreign_key => :viewer_id
-              end
+                class #{viewing_class} < ActiveRecord::Base
+                  belongs_to :viewed, :polymorphic => true
+                  belongs_to :viewer, :class_name => '#{viewer_class}', :foreign_key => :viewer_id
+                end
             EOV
           end
-          
+
           # Rails < 3
-          # write_inheritable_attribute( :acts_as_viewed_options , 
+          # write_inheritable_attribute( :acts_as_viewed_options ,
           #                                { :viewing_class => viewing_class,
           #                                  :viewer_class => viewer_class } )
           # class_inheritable_reader :acts_as_viewed_options
-          
+
           # Rails >= 3
           class_attribute :acts_as_viewed_options
           self.acts_as_viewed_options = { :viewing_class => viewing_class,
@@ -114,17 +114,17 @@ module ActiveRecord #:nodoc:
             before_create :init_viewing_fields
           end
 
-          # Add to the User (or whatever the viewer is) a has_many viewings 
+          # Add to the User (or whatever the viewer is) a has_many viewings
           viewer_as_class = viewer_class.constantize
           return if viewer_as_class.instance_methods.include?('find_in_viewings')
           viewer_as_class.class_eval <<-EOS
-            has_many :viewings, :foreign_key => :viewer_id, :class_name => '#{viewing_class.to_s}'
+              has_many :viewings, :foreign_key => :viewer_id, :class_name => '#{viewing_class.to_s}'
           EOS
         end
       end
 
       module ViewMethods
-      
+
         def self.included(base) #:nodoc:
           base.extend ClassMethods
         end
@@ -132,16 +132,28 @@ module ActiveRecord #:nodoc:
         # Is this object viewed already?
         def viewed?
           return (!self.views.nil? && self.views > 0) if attributes.has_key? 'views'
-          !viewings.find(:first).nil? 
+          !viewings.first.nil?
         end
-        
-        # Get the number of viewings for this object based on the views field, 
+
+        # Get the number of viewings for this object based on the views field,
         # or with a SQL query if the viewed objects doesn't have the views field
         def view_count
-          return self.views || 0 if attributes.has_key? 'views'
-          viewings.count 
+          return ("#{self.total_views}(#{self.views})" || 0) if attributes.has_key? 'views'
+          viewings.count
         end
-            
+
+        # Change views count (total_views and views) if it's existing in object
+        # If options[:only_total] == true count of unique views doesn't change
+        def increase_views_count(options)
+          if attributes.has_key?('views') && attributes.has_key?('total_views')
+            target = self
+            target.views = ((target.views || 0) + 1) if !options[:only_total]
+            target.total_views = ((target.total_views || 0) + 1)
+            target.save(:validate => false)
+            # target.save_without_validation
+          end
+        end
+
         # View the object with or without a viewer - create new or update as needed
         #
         # * <tt>ip</tt> - the viewer ip
@@ -149,48 +161,46 @@ module ActiveRecord #:nodoc:
         def view ip, viewer = nil
           # Sanity checks for the parameters
           viewing_class = acts_as_viewed_options[:viewing_class].constantize
-          if viewer && !(acts_as_viewed_options[:viewer_class].constantize === viewer) 
+          if viewer && !(acts_as_viewed_options[:viewer_class].constantize === viewer)
             raise ViewedError, "the viewer object must be the one used when defining acts_as_viewed (or a descendent of it). other objects are not acceptable"
           end
-                    
+
           viewing_class.transaction do
             if !viewed_by? ip, viewer
-              view = viewing_class.new              
+              view = viewing_class.new
               view.viewer_id = viewer.id if viewer && !viewer.id.nil?
               view.ip = ip
               viewings << view
-              target = self if attributes.has_key? 'views'
-              target.views = ( (target.views || 0) + 1 ) if target 
               view.save
-              target.save_without_validation if target
-              return true
+              increase_views_count(:only_total => false)
             else
-              return false
+              increase_views_count(:only_total => true)
             end
+            true
           end
         end
 
         # Check if an item was already viewed by the given viewer
         def viewed_by? ip, viewer = nil
-          if viewer && !viewer.nil? && !(acts_as_viewed_options[:viewer_class].constantize === viewer) 
+          if viewer && !viewer.nil? && !(acts_as_viewed_options[:viewer_class].constantize === viewer)
             raise ViewedError, "the viewer object must be the one used when defining acts_as_viewed (or a descendent of it). other objects are not acceptable"
           end
-          if viewer && !viewer.id.nil? 
-            return viewings.where(['viewer_id = ? or ip = ?', viewer.id, ip]).count > 0
+          if viewer && !viewer.id.nil? && !viewer.anonymous?
+            return viewings.where("viewer_id = '#{viewer.id}'").any?
           else
-            return viewings.where(['ip = ?', ip]).count > 0
+            return viewings.where("ip = '#{ip}'").any?
           end
         end
-            
+
         private
 
         def init_viewing_fields #:nodoc:
           if attributes.has_key? 'views'
-            self.views ||= 0 
+            self.views ||= 0
           end
-        end 
+        end
 
-      end  
+      end
 
       module ClassMethods
 
@@ -199,16 +209,18 @@ module ActiveRecord #:nodoc:
         # new tables as it will make it as part of the table creation, and not generate
         # ALTER TABLE calls after the fact
         def generate_viewings_columns table
-          table.column :views, :integer
+          table.column :views, :integer # uniq views
+          table.column :total_views, :integer
         end
 
-        # Create the needed columns for acts_as_viewed. 
+        # Create the needed columns for acts_as_viewed.
         # To be used during migration, but can also be used in other places.
         def add_viewings_columns
           if !self.content_columns.find { |c| 'views' == c.name }
             self.connection.add_column table_name, :views, :integer, :default => '0'
+            self.connection.add_column table_name, :total_views, :integer, :default => '0'
             self.reset_column_information
-          end            
+          end
         end
 
         # Remove the acts_as_viewed specific columns added with add_viewings_columns
@@ -216,55 +228,55 @@ module ActiveRecord #:nodoc:
         def remove_viewings_columns
           if self.content_columns.find { |c| 'views' == c.name }
             self.connection.remove_column table_name, :views
+            self.connection.remove_column table_name, :total_views
             self.reset_column_information
-          end            
+          end
         end
 
         # Create the viewings table
         # === Options hash:
-        # * <tt>:table_name</tt> - use a table name other than viewings 
+        # * <tt>:table_name</tt> - use a table name other than viewings
         # To be used during migration, but can also be used in other places
         def create_viewings_table options = {}
-          name        = options[:table_name] || :viewings
-          self.connection.create_table(name) do |t|
-            t.column :viewer_id,   :integer
-            t.column :viewed_id,   :integer
-            t.column :viewed_type, :string
-            t.column :ip, :string, :limit => '24'
-            t.column :created_at, :datetime
-          end
+          name = options[:table_name] || :viewings
+          if !self.connection.table_exists?(name)
+            self.connection.create_table(name) do |t|
+              t.column :viewer_id, :integer
+              t.column :viewed_id, :integer
+              t.column :viewed_type, :string
+              t.column :ip, :string, :limit => '24'
+              t.column :created_at, :datetime
+            end
 
-          self.connection.add_index name, :viewer_id
-          self.connection.add_index name, [:viewed_type, :viewed_id]
-          
+            self.connection.add_index(name, :viewer_id)
+            self.connection.add_index(name, [:viewed_type, :viewed_id])
+          end
         end
 
-        # Drop the viewings table. 
+        # Drop the viewings table.
         # === Options hash:
         # * <tt>:table_name</tt> - the name of the viewings table, defaults to viewings
         # To be used during migration, but can also be used in other places
         def drop_viewings_table options = {}
           name = options[:table_name] || :viewings
-          self.connection.drop_table name 
+          if self.connection.table_exists?(name)
+            self.connection.drop_table(name)
+          end
         end
-          
+
         # Find all viewings for a specific viewer.
-        def find_viewed_by viewer        
+        def find_viewed_by viewer
           viewing_class = acts_as_viewed_options[:viewing_class].constantize
           if !(acts_as_viewed_options[:viewer_class].constantize === viewer)
-             raise ViewedError, "The viewer object must be the one used when defining acts_as_viewed (or a descendent of it). other objects are not acceptable" 
+            raise ViewedError, "The viewer object must be the one used when defining acts_as_viewed (or a descendent of it). other objects are not acceptable"
           end
           raise ViewedError, "Viewer must be a valid and existing object" if viewer.nil? || viewer.id.nil?
-          raise ViewedError, 'Viewer must be a valid viewer' if !viewing_class.column_names.include? "viewer_id"  
+          raise ViewedError, 'Viewer must be a valid viewer' if !viewing_class.column_names.include? "viewer_id"
           viewed_class = ActiveRecord::Base.send(:class_name_of_active_record_descendant, self).to_s
-          conds = [ 'viewed_type = ? AND viewer_id = ?', viewed_class, viewer.id ]
-          acts_as_viewed_options[:viewing_class].constantize.where(:conditions => conds).collect {|r| r.viewed_type.constantize.find_by_id r.viewed.id }
+          conds = ['viewed_type = ? AND viewer_id = ?', viewed_class, viewer.id]
+          acts_as_viewed_options[:viewing_class].constantize.find(:all, :conditions => conds).collect { |r| r.viewed_type.constantize.find_by_id r.viewed.id }
         end
       end
     end
   end
 end
-
-
-ActiveRecord::Base.send :include, ActiveRecord::Acts::Viewed
-

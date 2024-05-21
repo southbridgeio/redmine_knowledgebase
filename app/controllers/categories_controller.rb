@@ -8,8 +8,8 @@ class CategoriesController < ApplicationController
   include WatchersHelper
 
   before_action :find_project_by_project_id, :authorize
-  before_action :get_category, :only => [:show, :edit, :update, :destroy]
-  accept_rss_auth :show
+  before_action :get_category, :only => [:show, :edit, :update, :destroy, :index]
+  respond_to?(:accept_atom_auth) ? accept_atom_auth(:show) : accept_rss_auth(:show)
 
   rescue_from ActiveRecord::RecordNotFound, :with => :force_404
 
@@ -47,7 +47,8 @@ class CategoriesController < ApplicationController
   end
 
   def create
-    @category = KbCategory.new(params[:category])
+    @category = KbCategory.new
+    @category.safe_attributes = params[:category]
     @category.project_id=@project.id
     if @category.save
       # Test if the new category is a root category, and if more categories exist.
@@ -97,16 +98,13 @@ class CategoriesController < ApplicationController
       @category.move_to_child_of(KbCategory.find(params[:parent_id]))
     end
 
-    if @category.update_attributes(params[:category])
+    @category.safe_attributes = params[:category]
+    if @category.save
       flash[:notice] = l(:label_category_updated)
       redirect_to({ :action => 'show', :id => @category.id, :project_id => @project })
     else
       render :action => 'edit'
     end
-  end
-
-  def params
-    super.to_unsafe_h
   end
 
 #######
@@ -129,7 +127,7 @@ private
       @tag = params[:tag]
       @tag_array = *@tag.split(',')
       @tag_hash = Hash[ @tag_array.map{ |tag| [tag.downcase, 1] } ]
-      @articles = @articles.tagged_with(@tag)
+      @articles = KbArticle.where(id: @articles.tagged_with(@tag).map(&:id))
     end
 
     @tags = @articles.tag_counts.sort { |a, b| a.name.downcase <=> b.name.downcase }
@@ -140,9 +138,9 @@ private
     @article_count = @articles.count
     @article_pages = Redmine::Pagination::Paginator.new @article_count, @limit, params['page']
     @offset ||= @article_pages.offset
-    @articles = @articles.preload(:author).with_rating.offset(@offset).limit(@limit)
+    @articles = @articles.offset(@offset).limit(@limit)
 
-    @categories = @project.categories.where(:parent_id => nil).preload(children: { children: { children: :children } })
+    @categories = @project.categories.where(:parent_id => nil)
   end
 
 end
