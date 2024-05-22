@@ -14,7 +14,7 @@
   <tbody>
   <% show_diff = @article.versions.size > 1 %>
   <% line_num = 1 %>
-  <% @article.versions.reverse.each do |ver| %>
+  <% @article.versions.sort_by(&:id).reverse.each do |ver| %>
   <tr class="wiki-page-version <%= cycle("odd", "even") %>">
       <td class="id"><%=h @article.version == ver.version ? l(:text_current_version) : link_to((ver.version), {:action => 'version', :kb_article_id => @article.id, :version => ver.version}) %></td>
       <td class="checkbox"><%= radio_button_tag('version', ver.version, (line_num==1), :id => "cb-#{line_num}", :onclick => "$('#cbto-#{line_num+1}').attr('checked', true);") if show_diff && (line_num < @versions.size) %></td>
