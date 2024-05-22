@@ -19,6 +19,9 @@ class ArticlesController < ApplicationController
     ActiveRecord::ConnectionAdapters::Column.send(:alias_method, :type_cast, :type_cast_for_database)
   end
 
+  attr_accessor :section, :section_hash, :text
+  helper_method :section, :section_hash, :text
+
   def index
     summary_limit = redmine_knowledgebase_settings_value(:summary_limit).to_i
 
@@ -34,7 +37,7 @@ class ArticlesController < ApplicationController
     @articles_toprated = @project.articles.includes(:ratings).sort_by { |a| [a.rating_average, a.rated_count] }.reverse.first(summary_limit)
 
     @tags = @project.articles.tag_counts.sort { |a, b| a.name.downcase <=> b.name.downcase }
-    @tags_hash = Hash[ @project.articles.tag_counts.map{ |tag| [tag.name.downcase, 1] } ]
+    @tags_hash = Hash[@project.articles.tag_counts.map { |tag| [tag.name.downcase, 1] }]
   end
 
   def authored
@@ -46,15 +49,15 @@ class ArticlesController < ApplicationController
     if params[:tag]
       @tag = params[:tag]
       @tag_array = *@tag.split(',')
-      @tag_hash = Hash[ @tag_array.map{ |tag| [tag.downcase, 1] } ]
+      @tag_hash = Hash[@tag_array.map { |tag| [tag.downcase, 1] }]
       @articles = KbArticle.where('kb_articles.id in (?)', @articles.tagged_with(@tag).map(&:id))
     end
 
     @tags = @articles.tag_counts.sort { |a, b| a.name.downcase <=> b.name.downcase }
-    @tags_hash = Hash[ @articles.tag_counts.map{ |tag| [tag.name.downcase, 1] } ]
+    @tags_hash = Hash[@articles.tag_counts.map { |tag| [tag.name.downcase, 1] }]
 
     # Pagination of article lists
-    @limit = redmine_knowledgebase_settings_value( :articles_per_list_page).to_i
+    @limit = redmine_knowledgebase_settings_value(:articles_per_list_page).to_i
     @article_count = @articles.count
     @article_pages = Redmine::Pagination::Paginator.new @article_count, @limit, params['page']
     @offset ||= @article_pages.offset
@@ -72,7 +75,7 @@ class ArticlesController < ApplicationController
 
     # Prefill with critical tags
     if redmine_knowledgebase_settings_value(:critical_tags)
-          @article.tag_list = redmine_knowledgebase_settings_value(:critical_tags).split(/\s*,\s*/)
+      @article.tag_list = redmine_knowledgebase_settings_value(:critical_tags).split(/\s*,\s*/)
     end
 
     @tags = @project.articles.tag_counts
@@ -117,7 +120,7 @@ class ArticlesController < ApplicationController
     respond_to do |format|
       format.html { render :template => 'articles/show', :layout => !request.xhr? }
       format.atom { render_feed(@article, :title => "#{l(:label_article)}: #{@article.title}") }
-	  format.pdf  { send_data(article_to_pdf(@article, @project), :type => 'application/pdf', :filename => 'export.pdf') }
+      format.pdf { send_data(article_to_pdf(@article, @project), :type => 'application/pdf', :filename => 'export.pdf') }
     end
   end
 
@@ -127,31 +130,48 @@ class ArticlesController < ApplicationController
       return false
     end
 
-    @categories=@project.categories.all
+    @categories = @project.categories.all
 
     # @page is used when using redmine_wysiwyg_editor plugin to show added attachments in menu
-    @page = @article 
+    @page = @article
     # don't keep previous comment
     @article.version_comments = nil
     @article.version = params[:version]
     @tags = @project.articles.tag_counts
     @kb_article_editing = true
     @kb_use_thumbs = redmine_knowledgebase_settings_value(:show_thumbnails_for_articles)
+
+    @text = @article.content
+    if params[:section].present?
+      @section = params[:section].to_i
+      @text, @section_hash = Redmine::WikiFormatting.formatter.new(@text).get_section(@section)
+      render_404 if @text.blank?
+    end
   end
 
   def update
-
     if not @article.editable_by?(User.current)
       render_403
       return false
     end
 
     @article.updater_id = User.current.id
-    params[:article][:category_id] = params[:category_id]
+    params[:article][:category_id] = params[:category_id] if params[:category_id].present?
     @categories = @project.categories.all
     # don't keep previous comment
     @article.version_comments = nil
     @article.version_comments = params[:article][:version_comments]
+
+    if params[:section].present?
+      @section = params[:section].to_i
+      @section_hash = params[:section_hash]
+      @text = params[:article].delete(:content)
+      @article.content = Redmine::WikiFormatting.formatter.new(@article.content)
+                                                .update_section(@section, @text, @section_hash)
+    else
+      @text = params.dig(:article, :content)
+    end
+
     @article.safe_attributes = params[:article]
     if @article.save
       attach(@article, params[:attachments])
@@ -159,6 +179,7 @@ class ArticlesController < ApplicationController
       redirect_to(action: 'show', id: @article.id, project_id: @project)
       KbMailer.article_update(User.current, @article).deliver
     else
+      @tags = @project.articles.tag_counts
       render(action: 'edit', id: @article.id)
     end
   end
@@ -203,7 +224,7 @@ class ArticlesController < ApplicationController
     KbMailer.article_destroy(User.current, @article).deliver
     @article.destroy
     flash[:notice] = l(:label_article_removed)
-    redirect_to({ :controller => 'articles', :action => 'index', :project_id => @project})
+    redirect_to({ :controller => 'articles', :action => 'index', :project_id => @project })
   end
 
   def add_attachment
@@ -219,10 +240,10 @@ class ArticlesController < ApplicationController
   def tagged
     @tag = params[:id]
     @list = if params[:sort] && params[:direction]
-      @project.articles.order("#{params[:sort]} #{params[:direction]}").tagged_with(@tag)
-    else
-      @project.articles.tagged_with(@tag)
-    end
+              @project.articles.order("#{params[:sort]} #{params[:direction]}").tagged_with(@tag)
+            else
+              @project.articles.tagged_with(@tag)
+            end
   end
 
   def preview
@@ -263,7 +284,7 @@ class ArticlesController < ApplicationController
     redirect_to :action => 'show', :id => @article, :project_id => @project
   end
 
-private
+  private
 
   # Abstract attachment method to resolve how files should be attached to a model.
   # In newer versions of Redmine, the attach_files functionality was moved
