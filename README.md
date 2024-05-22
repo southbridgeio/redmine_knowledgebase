@@ -1,7 +1,3 @@
-# MAINTAINER NEEDED
-
-The Redmine Knowledgebase is still receiving pull requests and issues, but does not have an active maintainer. I (@alexbevi) stepped away a number of years ago, and Robert (@robspearman) stepped in and took over. It's been a couple years now and Robert's availability is diminished so we're on the lookout for a new steward for the project. If you're interested shoot me an email at alex@alexbevi.com.
-
 # Redmine Knowledgebase Plugin
 
 ![](screenshots/tiled-articles-201801.jpg "Screenshot of tiled view option.")
@@ -12,8 +8,6 @@ This plugin adds professional knowledgebase functionality to the [Redmine](http:
 
 ## Recent Changes
 
-* Redmine 4.1.x support (thanks @Reshetov!)
-* No longer conflicts with Redmine CRM plugin.
 * Tiled visual indexes are now supported using thumbnails.
 * Articles are better formatted to work with more themes.
 * Tag logic is improved and critical tags can be defined easily.
@@ -22,9 +16,7 @@ This plugin adds professional knowledgebase functionality to the [Redmine](http:
 
 ## Warnings
 
-The latest version of this plugin is for Redmine 4.1.x. If you're still using an older Redmine, checkout tag v3.2.2 for Redmine 3.x or even the ancient `redmine-2.x` branch.
-
-As of 4.1.x, this plugin can now coexist with the Redmine CRM plugin.
+This version of the plugin is adapted for Redmine 5.1 (Rails 6.1.7.6) and won't work on earlier Redmine versions.
 
 ## Introduction
 
@@ -36,7 +28,7 @@ As of 4.1.x, this plugin can now coexist with the Redmine CRM plugin.
 
 [Redmine](http://www.redmine.org) is just plain awesome, and has proven to provide 90% of the functionality I need. The one feature that was missing was a usable knowledgebase component. I've looked at some of the open source solutions available, but couldn't find anything that fit my needs exactly. Seeing as Redmine is so easily extended, I figured why not create it for this platform instead of starting yet another project from scratch :P
 
-**SHAMELESS PLUG** This plugin is discussed in [Redmine Plugin Extension and Development](https://www.packtpub.com/product/redmine-plugin-extension-and-development/9781783288748), which is now available from Packt Publishing. 
+**SHAMELESS PLUG** This plugin is discussed in [Redmine Plugin Extension and Development](http://www.packtpub.com/redmine-plugin-extension-and-development/book), which is now available from Packt Publishing.
 
 ## Features
 
@@ -55,7 +47,7 @@ As of 4.1.x, this plugin can now coexist with the Redmine CRM plugin.
 
 To install the knowledgebase, execute the following commands from the root of your redmine directory, assuming that your RAILS_ENV enviroment variable is set to "production":
 
-    git clone git://github.com/alexbevi/redmine_knowledgebase.git plugins/redmine_knowledgebase
+    git clone git://github.com/southbridgeio/redmine_knowledgebase.git plugins/redmine_knowledgebase
     bundle install
     rake redmine:plugins:migrate NAME=redmine_knowledgebase
 
@@ -66,23 +58,23 @@ need to restart Redmine for the plugin to be available.
 
 ### Updating from v2.3.0 (Should work for all 2.x versions but has not been tested)
 
-To update redmine from v2.3.0 to 3.0+ you will first want to delete ``redmine_knowledgebase`` from the the ``/plugins`` and ``/public/plugin_assets`` directories. 
+To update redmine from v2.3.0 to 3.0+ you will first want to delete ``redmine_knowledgebase`` from the the ``/plugins`` and ``/public/plugin_assets`` directories.
 
 Once those two directories have been removed, run the following commands (as though you were performing a fresh installation):
 
-    git clone git://github.com/alexbevi/redmine_knowledgebase.git plugins/redmine_knowledgebase
+    git clone git://github.com/southbridgeio/redmine_knowledgebase.git plugins/redmine_knowledgebase
     bundle install
     rake redmine:plugins:migrate NAME=redmine_knowledgebase
-  
+
 Upon restarting Redmine, the Knowledgebase entry will no longer appear as a [:top_menu](http://www.redmine.org/projects/redmine/wiki/Plugin_Tutorial#Extending-menus) entry.
 
 The knowledgebase is now project-specific, and therefore must be included in at least one project to work properly. If you wish to use it like v2.x, you can make a [public project](http://www.redmine.org/projects/redmine/wiki/RedmineProjectSettings#General-settings) that will only be used to store knowledgebase articles.
 
-You will need to go into your database now and change the ``kb_articles`` and ``kb_categories`` ``project_id`` to the project id of the knowledgebase project you just created. 
+You will need to go into your database now and change the ``kb_articles`` and ``kb_categories`` ``project_id`` to the project id of the knowledgebase project you just created.
 
 You can find the id in the projects table.
 
-To generate the full project list from the command line, you can run the following from the root of your Redmine installation: 
+To generate the full project list from the command line, you can run the following from the root of your Redmine installation:
 
 ```ruby
 rails runner "Project.all.map { |p| puts \"#{p.id}\t#{p.name}\" }"
@@ -124,14 +116,14 @@ Category.
 Click on **Create Category**. This takes you to the Create Category page.
 
 * **Root Category** - since this is the first category, this is checked by
-default. Root categories show in the right hand *Browse by Category*
-sidebar.
+  default. Root categories show in the right hand *Browse by Category*
+  sidebar.
 
 * **Title** - give the new category a title relevant to your needs. This title
-will show in the *Browse by Category* sidebar as a navigation link.
+  will show in the *Browse by Category* sidebar as a navigation link.
 
 * **Description** - provide a description of the category. This description
-will show on the category main page.
+  will show on the category main page.
 
 Click on **Create** to create the new category. You can edit this
 information again once the category is created by using the Edit link on
@@ -169,12 +161,12 @@ Category** link on the right side of the page. This takes you to the
 * **Root Category** - uncheck this box if you want this to be a sub-category
 
 * **Parent Category** - choose the relevant parent category from the drop down
-menu. This option only appears if the *Root Category* checkbox is un-checked.
+  menu. This option only appears if the *Root Category* checkbox is un-checked.
 
 * **Title** - give the new sub-category a title relevant to your needs.
 
 * **Description** - provide a description for the sub-category. This
-description will appear on the sub-category main page.
+  description will appear on the sub-category main page.
 
 Click on **Create** to create the new sub-category. You can edit this
 information again by using the Edit link on the sub-category main page.
@@ -199,11 +191,11 @@ on the **Create Article** link. This opens the *Create Article* page.
 * **Title** - give the article a relevant title
 
 * **Summary** - a short summary of what the article is about. This shows under
-the article on the category or sub-category main page.
+  the article on the category or sub-category main page.
 
 * **Content** - the content of the article. The Content section uses the
-Redmine Wiki formatting syntax, so anything that is possible in the
-Redmine Wiki is possible here.
+  Redmine Wiki formatting syntax, so anything that is possible in the
+  Redmine Wiki is possible here.
 
 * **Tags** - add tags to the article Separate tags or tag groups with commas. Global tag search is currently not implemented, but is in development. Tag search is currently only available at the Article level.
 
@@ -245,5 +237,6 @@ Now that categories and articles have been created, the home page of the Knowled
 * Released under the MIT license.  See LICENSE file.
 * Copyright (c) 2010-2016 Alex Bevilacqua, original author.
 * Modifications (c) 2016-2018 Rob Spearman.
+* Redmine 5 adaptation (c) 2018 Southbridge
 
 This plugin would not be possible without the many contributions from the community. See [AUTHORS](https://github.com/alexbevi/redmine_knowledgebase/blob/master/AUTHORS) for the full list.
