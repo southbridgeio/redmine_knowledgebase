@@ -73,6 +73,40 @@ class KbArticle < ActiveRecord::Base
 
   has_many :comments, -> { order 'created_on DESC' }, :as => :commented, :dependent => :destroy
 
+  scope :newest, ->(limit:) { preload(:category).order('created_at DESC').limit(limit) }
+
+  scope :recently_updated, ->(limit:) { preload(:category).order('updated_at DESC').limit(limit) }
+
+  scope :popular, ->(limit:) do
+    preload(:viewings)
+      .preload(:category)
+      .left_joins(:viewings)
+      .group(:id)
+      .select("#{table_name}.*, COUNT(#{Viewing.table_name}.id) AS views")
+      .order('views DESC')
+      .limit(limit)
+  end
+
+  scope :top_rated, ->(limit:) do
+    preload(:ratings)
+      .preload(:category)
+      .left_joins(:ratings)
+      .group(:id)
+      .with_rating
+      .order('rating_avg DESC, rating_count DESC')
+      .limit(limit)
+
+  end
+
+  scope :with_rating, -> do
+    left_joins(:ratings)
+      .group(:id)
+      .select(<<~SQL.squish)
+          #{table_name}.*,
+          AVG(COALESCE(#{Rating.table_name}.rating, 0)) AS rating_avg,
+          COUNT(#{Rating.table_name}.id) AS rating_count
+        SQL
+  end
 
   def recipients
     notified = []

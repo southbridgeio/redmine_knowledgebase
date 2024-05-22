@@ -138,7 +138,7 @@ module RedmineKnowledgebase #:nodoc:
         # Get the number of viewings for this object based on the views field,
         # or with a SQL query if the viewed objects doesn't have the views field
         def view_count
-          return ("#{self.total_views}(#{self.views})" || 0) if attributes.has_key? 'views'
+          return self.views || 0 if attributes.has_key? 'views'
           viewings.count
         end
 

@@ -29,12 +29,12 @@ class ArticlesController < ApplicationController
     @total_articles = @project.articles.count
     @total_articles_by_me = @project.articles.where(author_id: User.current.id).count
 
-    @categories = @project.categories.where(parent_id: nil)
+    @categories = @project.categories.where(parent_id: nil).preload(children: { children: { children: :children } })
 
-    @articles_newest = @project.articles.order("created_at DESC").first(summary_limit)
-    @articles_latest = @project.articles.order("updated_at DESC").first(summary_limit)
-    @articles_popular = @project.articles.includes(:viewings).sort_by(&:view_count).reverse.first(summary_limit)
-    @articles_toprated = @project.articles.includes(:ratings).sort_by { |a| [a.rating_average, a.rated_count] }.reverse.first(summary_limit)
+    @articles_newest = @project.articles.newest(limit: summary_limit)
+    @articles_latest = @project.articles.recently_updated(limit: summary_limit)
+    @articles_popular = @project.articles.popular(limit: summary_limit)
+    @articles_toprated = @project.articles.top_rated(limit: summary_limit)
 
     @tags = @project.articles.tag_counts.sort { |a, b| a.name.downcase <=> b.name.downcase }
     @tags_hash = Hash[@project.articles.tag_counts.map { |tag| [tag.name.downcase, 1] }]
