@@ -131,19 +131,6 @@ module KnowledgebaseHelper
     return tabs
   end
 
-  def create_preview_link
-    v = Redmine::VERSION.to_a
-    if v[0] == 2 && v[1] <= 1 && v[2] <= 0
-      link_to_remote l(:label_preview),
-                     { :url => { :controller => 'articles', :action => 'preview' },
-                       :method => 'post',
-                       :update => 'preview',
-                       :with => "Form.serialize('articles-form')" }
-    else
-      preview_link({ :controller => 'articles', :action => 'preview' }, 'articles-form') if Redmine::VERSION.to_s <= '3.4.5'
-    end
-  end
-
   # The first thumbnailable attachment with description 'thumbnail' is used
   # as the article thumbnail.  If none is found, then the last thumbnailable
   # attachment is used.  This is to use Redmine attachment model without changes.
