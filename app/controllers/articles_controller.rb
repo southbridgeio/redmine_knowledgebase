@@ -10,9 +10,14 @@ class ArticlesController < ApplicationController
 
   before_action :find_project_by_project_id, :authorize
   before_action :get_article, :except => [:index, :new, :create, :preview, :comment, :tagged, :rate, :authored]
+  before_action :find_attachments, :only => [:preview]
 
   rescue_from ActionView::MissingTemplate, :with => :force_404
   rescue_from ActiveRecord::RecordNotFound, :with => :force_404
+
+  if ActiveRecord::ConnectionAdapters::Column.respond_to?(:type_cast_for_database)
+    ActiveRecord::ConnectionAdapters::Column.send(:alias_method, :type_cast, :type_cast_for_database)
+  end
 
   attr_accessor :section, :section_hash, :text
   helper_method :section, :section_hash, :text
@@ -32,26 +37,27 @@ class ArticlesController < ApplicationController
     @articles_toprated = @project.articles.top_rated(limit: summary_limit)
 
     @tags = @project.articles.tag_counts.sort { |a, b| a.name.downcase <=> b.name.downcase }
-    @tags_hash = Hash[ @project.articles.tag_counts.map{ |tag| [tag.name.downcase, 1] } ]
+    @tags_hash = Hash[@project.articles.tag_counts.map { |tag| [tag.name.downcase, 1] }]
   end
 
   def authored
 
     @author_id = params[:author_id]
-    @articles = @project.articles.where(:author_id => @author_id).order("#{KbArticle.table_name}.#{sort_column} #{sort_direction}")
+    @articles = KbArticle.where('kb_articles.id in (?)', @project.articles.where(:author_id => @author_id).pluck(:id))
+                         .order("#{KbArticle.table_name}.#{sort_column} #{sort_direction}")
 
     if params[:tag]
       @tag = params[:tag]
       @tag_array = *@tag.split(',')
-      @tag_hash = Hash[ @tag_array.map{ |tag| [tag.downcase, 1] } ]
-      @articles = @articles.tagged_with(@tag)
+      @tag_hash = Hash[@tag_array.map { |tag| [tag.downcase, 1] }]
+      @articles = KbArticle.where('kb_articles.id in (?)', @articles.tagged_with(@tag).map(&:id))
     end
 
     @tags = @articles.tag_counts.sort { |a, b| a.name.downcase <=> b.name.downcase }
-    @tags_hash = Hash[ @articles.tag_counts.map{ |tag| [tag.name.downcase, 1] } ]
+    @tags_hash = Hash[@articles.tag_counts.map { |tag| [tag.name.downcase, 1] }]
 
     # Pagination of article lists
-    @limit = redmine_knowledgebase_settings_value( :articles_per_list_page).to_i
+    @limit = redmine_knowledgebase_settings_value(:articles_per_list_page).to_i
     @article_count = @articles.count
     @article_pages = Redmine::Pagination::Paginator.new @article_count, @limit, params['page']
     @offset ||= @article_pages.offset
@@ -66,10 +72,10 @@ class ArticlesController < ApplicationController
     @default_category = params[:category_id]
     @article.category_id = params[:category_id]
     @article.version = params[:version]
-    
+
     # Prefill with critical tags
     if redmine_knowledgebase_settings_value(:critical_tags)
-          @article.tag_list = redmine_knowledgebase_settings_value(:critical_tags).split(/\s*,\s*/)
+      @article.tag_list = redmine_knowledgebase_settings_value(:critical_tags).split(/\s*,\s*/)
     end
 
     @tags = @project.articles.tag_counts
@@ -86,7 +92,8 @@ class ArticlesController < ApplicationController
   end
 
   def create
-    @article = KbArticle.new(params[:article])
+    @article = KbArticle.new
+    @article.safe_attributes = params[:article]
     @article.category_id = params[:category_id]
     @article.author_id = User.current.id
     @article.project_id = KbCategory.find(params[:category_id]).project_id
@@ -97,7 +104,7 @@ class ArticlesController < ApplicationController
       attachments = attach(@article, params[:attachments])
       flash[:notice] = l(:label_article_created, :title => @article.title)
       redirect_to({ :action => 'show', :id => @article.id, :project_id => @project })
-      KbMailer.article_create(@article).deliver
+      KbMailer.article_create(User.current, @article).deliver
     else
       render(:action => 'new')
     end
@@ -113,18 +120,20 @@ class ArticlesController < ApplicationController
     respond_to do |format|
       format.html { render :template => 'articles/show', :layout => !request.xhr? }
       format.atom { render_feed(@article, :title => "#{l(:label_article)}: #{@article.title}") }
-	  format.pdf  { send_data(article_to_pdf(@article, @project), :type => 'application/pdf', :filename => 'export.pdf') }
+      format.pdf { send_data(article_to_pdf(@article, @project), :type => 'application/pdf', :filename => 'export.pdf') }
     end
   end
 
   def edit
-    unless @article.editable_by?(User.current)
+    if not @article.editable_by?(User.current)
       render_403
       return false
     end
 
-    @categories=@project.categories.all
+    @categories = @project.categories.all
 
+    # @page is used when using redmine_wysiwyg_editor plugin to show added attachments in menu
+    @page = @article
     # don't keep previous comment
     @article.version_comments = nil
     @article.version = params[:version]
@@ -141,7 +150,6 @@ class ArticlesController < ApplicationController
   end
 
   def update
-
     if not @article.editable_by?(User.current)
       render_403
       return false
@@ -159,17 +167,17 @@ class ArticlesController < ApplicationController
       @section_hash = params[:section_hash]
       @text = params[:article].delete(:content)
       @article.content = Redmine::WikiFormatting.formatter.new(@article.content)
-                             .update_section(@section, @text, @section_hash)
+                                                .update_section(@section, @text, @section_hash)
     else
       @text = params.dig(:article, :content)
     end
 
-    @article.assign_attributes(params[:article])
+    @article.safe_attributes = params[:article]
     if @article.save
       attach(@article, params[:attachments])
       flash[:notice] = l(:label_article_updated)
       redirect_to(action: 'show', id: @article.id, project_id: @project)
-      KbMailer.article_update(@article).deliver
+      KbMailer.article_update(User.current, @article).deliver
     else
       @tags = @project.articles.tag_counts
       render(action: 'edit', id: @article.id)
@@ -184,12 +192,13 @@ class ArticlesController < ApplicationController
     else
 
       @article.without_locking do
-        @comment = Comment.new(params[:comment])
+        @comment = Comment.new
+        @comment.safe_attributes = params[:comment]
         @comment.author = User.current || nil
         if @article.comments << @comment
           flash[:notice] = l(:label_comment_added)
           redirect_to :action => 'show', :id => @article, :project_id => @project
-          KbMailer.article_comment(@article, @comment).deliver
+          KbMailer.article_comment(User.current, @article, @comment).deliver
         else
           show
           render :action => 'show'
@@ -212,10 +221,10 @@ class ArticlesController < ApplicationController
       return false
     end
 
-    KbMailer.article_destroy(@article).deliver
+    KbMailer.article_destroy(User.current, @article).deliver
     @article.destroy
     flash[:notice] = l(:label_article_removed)
-    redirect_to({ :controller => 'articles', :action => 'index', :project_id => @project})
+    redirect_to({ :controller => 'articles', :action => 'index', :project_id => @project })
   end
 
   def add_attachment
@@ -231,16 +240,24 @@ class ArticlesController < ApplicationController
   def tagged
     @tag = params[:id]
     @list = if params[:sort] && params[:direction]
-      @project.articles.order("#{params[:sort]} #{params[:direction]}").tagged_with(@tag)
-    else
-      @project.articles.tagged_with(@tag)
-    end
+              @project.articles.order("#{params[:sort]} #{params[:direction]}").tagged_with(@tag)
+            else
+              @project.articles.tagged_with(@tag)
+            end
   end
 
   def preview
-    @summary = (params[:article] ? params[:article][:summary] : nil)
-    @content = (params[:article] ? params[:article][:content] : nil)
-    render :layout => false
+    @article = @project.articles.find_by(id: params[:id])
+
+    # page is nil when previewing a new page
+    return render_403 unless @article.nil? || @article.editable_by?(User.current)
+
+    if @article
+      @attachments += @article.attachments
+      @previewed = @article
+    end
+    @text = params[:article].present? ? params[:article][:text] : params[:text]
+    render partial => 'common/preview'
   end
 
   def comment
@@ -265,10 +282,6 @@ class ArticlesController < ApplicationController
     @article.revert_to! params[:version]
     @article.clear_newer_versions
     redirect_to :action => 'show', :id => @article, :project_id => @project
-  end
-
-  def params
-    @params ||= super.to_unsafe_h.with_indifferent_access
   end
 
   private

@@ -6,11 +6,11 @@
 <% end %>
 
 <script type="text/javascript">
-    $(document).ready(function() {
-      $("#article_tag_list").tagit({
-        singleField: true,
-        availableTags: [ <% @tags.each do |tag| %>"<%= tag %>",<% end %> ]
-      });
+    $(document).ready(function () {
+        $("#article_tag_list").tagit({
+            singleField: true,
+            availableTags: [<% @tags.each do |tag| %>"<%= tag %>", <% end %>]
+        });
     });
 </script>
 
@@ -33,7 +33,7 @@
     <% end %>
   <% end %>
 
-<%= text_area_tag 'article[content]', text, cols: 60, rows: 15, class: 'wiki-edit', label: l(:label_content) %>
+  <%= text_area_tag 'article[content]', text, cols: 60, rows: 15, class: 'wiki-edit', label: l(:label_content) %>
 
   <% unless section %>
     <p><%= f.text_field :tag_list, :size => 80, :value => "#{@article.tag_list.join(",")}" %></p>
@@ -44,13 +44,13 @@
 
 <% unless section %>
   <% if @article.attachments.exists? %>
-  <div class="box">
-    <p><label><%= l(:label_attachment_plural) %></label>
-      <%= link_to_attachments @article,
-    :thumbnails => true,
-          :author => false %>
-    </p>
-  </div>
+    <div class="box">
+      <p><label><%= l(:label_attachment_plural) %></label>
+        <%= link_to_attachments @article,
+                                :thumbnails => true,
+                                :author => false %>
+      </p>
+    </div>
   <% end %>
 
   <% if redmine_knowledgebase_settings_value(:show_thumbnails_for_articles) %>
@@ -59,7 +59,7 @@
 
 
   <div class="box">
-  <p><label><%=l(:label_attachment_add)%></label><%= render :partial => 'attachments/form' %></p>
+    <p><label><%= l(:label_attachment_add) %></label><%= render :partial => 'attachments/form' %></p>
   </div>
 <% end %>
 

@@ -1,9 +1,6 @@
-require 'acts_as_viewed'
-require 'acts_as_rated'
-require 'diff'
-
 class KbArticle < ActiveRecord::Base
   unloadable
+  include Redmine::SafeAttributes
 
   self.locking_column = 'version'
   self.table_name = "kb_articles"
@@ -22,7 +19,7 @@ class KbArticle < ActiveRecord::Base
   acts_as_attachable
   acts_as_watchable
 
-  acts_as_versioned :if_changed => [:title, :content, :summary]
+  acts_as_versioned :table_name => :kb_article_versions, :if_changed => [:title, :content, :summary]
   self.non_versioned_columns << 'comments_count'
 
   acts_as_event :title => Proc.new {|o| status = (o.new_status ? "(#{l(:label_new_article)})" : nil ); "#{status} #{l(:label_title_articles)} ##{o.id} - #{o.title}" },
@@ -30,6 +27,19 @@ class KbArticle < ActiveRecord::Base
                 :datetime => :updated_at,
                 :type => Proc.new { |o| 'article-' + (o.new_status ? 'add' : 'edit') },
                 :url => Proc.new { |o| {:controller => 'articles', :action => 'show', :id => o.id, :project_id => o.project} }
+
+  safe_attributes 'category_id',
+                  'title',
+                  'summary',
+                  'content',
+                  'author_id',
+                  'comments_count',
+                  'project_id',
+                  'updater_id',
+                  'version_comments',
+                  'version',
+                  'tag_list'
+
 
   # Redmine 3.1.X
   if ActiveRecord::VERSION::MAJOR >= 4
@@ -42,7 +52,7 @@ class KbArticle < ActiveRecord::Base
     acts_as_searchable :columns => [ "#{table_name}.title", "#{table_name}.summary", "#{table_name}.content"],
                        :preload => [ :project ],
                        :date_column => :created_at
-  
+
     scope :visible, lambda {|*args|
       joins(:project).
       where(Project.allowed_to_condition(args.shift || User.current, :view_kb_articles, *args))}
@@ -56,7 +66,7 @@ class KbArticle < ActiveRecord::Base
                        :include => [ :project ],
                        :order_column => "#{table_name}.id",
                        :date_column => "#{table_name}.created_at"
-    
+
     scope :visible, lambda {|*args| { :include => :project,
       :conditions => Project.allowed_to_condition(args.shift || User.current, :view_kb_articles, *args) } }
   end
@@ -69,29 +79,29 @@ class KbArticle < ActiveRecord::Base
 
   scope :popular, ->(limit:) do
     preload(:viewings)
-        .preload(:category)
-        .left_joins(:viewings)
-        .group(:id)
-        .select("#{table_name}.*, COUNT(#{Viewing.table_name}.id) AS views")
-        .order('views DESC')
-        .limit(limit)
+      .preload(:category)
+      .left_joins(:viewings)
+      .group(:id)
+      .select("#{table_name}.*, COUNT(#{Viewing.table_name}.id) AS views")
+      .order('views DESC')
+      .limit(limit)
   end
 
   scope :top_rated, ->(limit:) do
     preload(:ratings)
-        .preload(:category)
-        .left_joins(:ratings)
-        .group(:id)
-        .with_rating
-        .order('rating_avg DESC, rating_count DESC')
-        .limit(limit)
+      .preload(:category)
+      .left_joins(:ratings)
+      .group(:id)
+      .with_rating
+      .order('rating_avg DESC, rating_count DESC')
+      .limit(limit)
 
   end
 
   scope :with_rating, -> do
     left_joins(:ratings)
-        .group(:id)
-        .select(<<~SQL.squish)
+      .group(:id)
+      .select(<<~SQL.squish)
           #{table_name}.*,
           AVG(COALESCE(#{Rating.table_name}.rating, 0)) AS rating_avg,
           COUNT(#{Rating.table_name}.id) AS rating_count

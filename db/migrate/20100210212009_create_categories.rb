@@ -1,4 +1,4 @@
-class CreateCategories < ActiveRecord::Migration[4.2]
+class CreateCategories < Rails.version < '5.1' ? ActiveRecord::Migration : ActiveRecord::Migration[4.2]
   def self.up
     create_table :kb_categories do |t|
       t.column :title, :string, :null => false

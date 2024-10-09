@@ -1,7 +1,7 @@
 require File.dirname(__FILE__) + '/../test_helper'
 
 class CategoryTest < ActiveSupport::TestCase
-  fixtures :kb_categories
+  plugin_fixtures :kb_categories
 
   test "should not save category without title" do
     category = KbCategory.new

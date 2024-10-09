@@ -59,7 +59,7 @@
   </p>
 
   <% other_formats_links do |f| %>
-    <%= f.link_to 'PDF', url: params %>
+    <%= f.link_to 'PDF', url: params.to_unsafe_hash %>
   <% end %>
 
   <div class="wiki"><h1><%= @article.title %></h1></div>

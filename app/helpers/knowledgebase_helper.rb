@@ -1,8 +1,8 @@
 module KnowledgebaseHelper
   include Redmine::Export::PDF
-  include KnowledgebaseSettingsHelper
+  include RedmineKnowledgebase::Helpers::KnowledgebaseSettingsHelper
   include ActionView::Helpers::NumberHelper
-  include Rails.application.routes.url_helpers
+  include RedmineCrm::TagsHelper
 
   def format_article_summary(article, format, options = {})
     output = case format
@@ -30,10 +30,10 @@ module KnowledgebaseHelper
           :rating_max => "5",
           :count => article.rated_count)
       end
-    else 
+    else
       nil
     end
-    
+
     sum = ""
     unless redmine_knowledgebase_settings_value(:disable_article_summaries)
       sum = "<p>" + (truncate article.summary, :length => options[:truncate]) + "</p>"
@@ -45,11 +45,11 @@ module KnowledgebaseHelper
   def sort_categories?
     redmine_knowledgebase_settings_value(:sort_category_tree)
   end
-  
+
   def show_category_totals?
     redmine_knowledgebase_settings_value(:show_category_totals)
   end
-  
+
   def updated_by(updated, updater)
      l(:label_updated_who, :updater => link_to_user(updater), :age => time_tag(updated)).html_safe
   end
@@ -104,14 +104,14 @@ module KnowledgebaseHelper
       end
     end
   end
-  
+
   def article_tabs
 
     content = {:name => 'content', :action => :content, :partial => 'articles/sections/content', :label => :label_content}
     comments = {:name => 'comments', :action => :comments, :partial => 'articles/sections/comments', :label => :label_comment_plural}
     attachments = {:name => 'attachments', :action => :attachments, :partial => 'articles/sections/attachments', :label => :label_attachment_plural}
     history = {:name => 'history', :action => :history, :partial => 'articles/sections/history', :label => :label_history}
-    
+
     unless redmine_knowledgebase_settings_value(:show_attachments_first)
 
       tabs = [content, comments, attachments, history]
@@ -125,7 +125,7 @@ module KnowledgebaseHelper
       tabs.pop(1)
     end
 
-    # TODO permissions?            
+    # TODO permissions?
     # tabs.select {|tab| User.current.allowed_to?(tab[:action], @project)}
 
     return tabs
@@ -141,7 +141,7 @@ module KnowledgebaseHelper
 
     if !thumb
       article.attachments.reverse_each do |attach|
-        if attach.thumbnailable? 
+        if attach.thumbnailable?
           thumb = attach
           break
         end
@@ -153,24 +153,24 @@ module KnowledgebaseHelper
 
 
   def get_article_thumbnail_url( article )
-    
+
     thumb = get_article_thumbnail( article )
 
     if thumb
       return thumbnail_path(thumb)
     else
-      return nil
+      return ''
     end
   end
 
   def get_article_thumbnail_url_absolute( article )
-    
+
     thumb = get_article_thumbnail( article )
 
     if thumb
-      return "#{Setting.protocol}://#{Setting.host_name}#{thumbnail_path(thumb)}"
+      return thumbnail_url(thumb)
     else
-      return nil
+      return ''
     end
   end
 

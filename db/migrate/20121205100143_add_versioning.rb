@@ -1,4 +1,4 @@
-class AddVersioning < ActiveRecord::Migration[4.2]
+class AddVersioning < Rails.version < '5.1' ? ActiveRecord::Migration : ActiveRecord::Migration[4.2]
   def self.up
     add_column :kb_articles, :version_comments, :string, :limit => 255, :default => ""
     KbArticle.create_versioned_table

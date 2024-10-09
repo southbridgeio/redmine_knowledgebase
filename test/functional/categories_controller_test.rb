@@ -1,8 +1,6 @@
 require File.dirname(__FILE__) + '/../test_helper'
 
-class ArticleTest < ActiveSupport::TestCase
-  plugin_fixtures :kb_articles
-
+class CategoriesControllerTest < ActionController::TestCase
   # Replace this with your real tests.
   def test_truth
     assert true
