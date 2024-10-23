@@ -15,7 +15,7 @@ Project.send :include, RedmineKnowledgebase::Concerns::KnowledgebaseProjectExten
 SettingsHelper.send :include, RedmineKnowledgebase::Helpers::KnowledgebaseSettingsHelper
 ApplicationHelper.send :include, RedmineCrm::TagsHelper
 
-Rails.configuration.to_prepare do
+Rails.application.config.after_initialize do
   Redmine::Activity.register :kb_articles
   Redmine::Search.available_search_types << 'kb_articles'
 end
