@@ -55,14 +55,14 @@ h3.cattitle {
 .recently-added { background-image: url(../images/page_white_add.png); background-repeat: no-repeat; }
 .recently-changed { background-image: url(../images/page_white_edit.png); background-repeat: no-repeat; }
 
-#options { padding: 0; margin-left: -10px; }
-#options li { margin: 0; padding: 0; list-style-type: none; position: relative }
-#options li a { display: block; line-height: 22px; padding-left: 25px; }
-#options .icon { position: relative; top: 10px; left: 12px }
-#options .print { background: url(../images/icon-printer.png) left no-repeat; }
-#options .pdf { background: url(../images/icon-pdf.png) left no-repeat; }
-#options .word { background: url(../images/icon-word.png) left no-repeat; }
-#options .bookmark { background: url(../images/icon-bookmark.png) left no-repeat; }
+#sidebar #options { padding: 0; margin-left: -10px; }
+#sidebar #options li { margin: 0; padding: 0; list-style-type: none; position: relative }
+#sidebar #options li a { display: block; line-height: 22px; padding-left: 25px; }
+#sidebar #options .icon { position: relative; top: 10px; left: 12px }
+#sidebar #options .print { background: url(../images/icon-printer.png) left no-repeat; }
+#sidebar #options .pdf { background: url(../images/icon-pdf.png) left no-repeat; }
+#sidebar #options .word { background: url(../images/icon-word.png) left no-repeat; }
+#sidebar #options .bookmark { background: url(../images/icon-bookmark.png) left no-repeat; }
 
 #category-crumbs { }
 #category-crumbs a:hover { text-decoration: underline; }
