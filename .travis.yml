@@ -2,6 +2,7 @@ language: ruby
 rvm:
   - 2.3.6
   - 2.5.1
+  - 3.2.6
 env:
   - REDMINE_VERSION=4.0-stable VERBOSE=yes
 script:
