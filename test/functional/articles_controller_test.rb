@@ -12,7 +12,7 @@ class ArticlesControllerTest < ActionController::TestCase
 
   def test_index
     Role.find(1).add_permission! :view_kb_articles
-    get :index, :project_id => @project.id
+    get :index, params: { project_id: @project.id }
 
     assert_response :success
     assert_template 'index'

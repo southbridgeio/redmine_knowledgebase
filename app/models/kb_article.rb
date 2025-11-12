@@ -1,5 +1,4 @@
-class KbArticle < ActiveRecord::Base
-  unloadable
+class KbArticle < ApplicationRecord
   include Redmine::SafeAttributes
 
   self.locking_column = 'version'

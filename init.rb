@@ -13,9 +13,9 @@ Redmine::Plugin.register :redmine_knowledgebase do
   author_url  "http://www.alexbevi.com"
   description 'A plugin for Redmine that adds knowledgebase functionality'
   url         'https://github.com/southbridgeio/redmine_knowledgebase'
-  version     '5.0.0'
+  version     '5.1.0'
 
-  requires_redmine :version_or_higher => '4.0.0'
+  requires_redmine :version_or_higher => '5.1.0'
 
   # Do not set any default boolean settings to true or will override user false setting!
   settings :default => {

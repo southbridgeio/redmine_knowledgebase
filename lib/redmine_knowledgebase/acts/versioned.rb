@@ -28,7 +28,7 @@ module RedmineKnowledgebase #:nodoc:
     # The class for the versioned model is derived the first time it is seen. Therefore, if you change your database schema you have to restart
     # your container for the changes to be reflected. In development mode this usually means restarting WEBrick.
     #
-    #   class Page < ActiveRecord::Base
+    #   class Page < ApplicationRecord
     #     # assumes pages_versions table
     #     acts_as_versioned
     #   end
@@ -162,7 +162,7 @@ module RedmineKnowledgebase #:nodoc:
         #
         # You can add or change those by modifying #non_versioned_columns.  Note that this takes strings and not symbols.
         #
-        #   class Post < ActiveRecord::Base
+        #   class Post < ApplicationRecord
         #     acts_as_versioned
         #     self.non_versioned_columns << 'comments_count'
         #   end

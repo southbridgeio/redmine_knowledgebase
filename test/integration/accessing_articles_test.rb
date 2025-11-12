@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/../test_helper'
 
-class AccessingArticlesTest < ActionController::IntegrationTest
+class AccessingArticlesTest < ActionDispatch::IntegrationTest
   def setup
     assert true
   end

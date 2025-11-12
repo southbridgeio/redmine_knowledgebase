@@ -1,6 +1,4 @@
 class ArticlesController < ApplicationController
-  unloadable
-
   helper :attachments
   include AttachmentsHelper
   helper :knowledgebase
