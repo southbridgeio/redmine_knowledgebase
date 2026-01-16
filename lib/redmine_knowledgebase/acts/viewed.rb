@@ -35,7 +35,7 @@ module RedmineKnowledgebase #:nodoc:
     #
     # == Example of usage:
     #
-    #   class Video < ActiveRecord::Base
+    #   class Video < ApplicationRecord
     #     acts_as_viewed
     #   end
     #
@@ -90,7 +90,7 @@ module RedmineKnowledgebase #:nodoc:
 
           unless Object.const_defined?(viewing_class)
             Object.class_eval <<-EOV
-                class #{viewing_class} < ActiveRecord::Base
+                class #{viewing_class} < ApplicationRecord
                   belongs_to :viewed, :polymorphic => true
                   belongs_to :viewer, :class_name => '#{viewer_class}', :foreign_key => :viewer_id
                 end

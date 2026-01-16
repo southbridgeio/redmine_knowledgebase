@@ -1,6 +1,4 @@
 class ArticlesController < ApplicationController
-  unloadable
-
   helper :attachments
   include AttachmentsHelper
   helper :knowledgebase
@@ -31,10 +29,10 @@ class ArticlesController < ApplicationController
 
     @categories = @project.categories.where(parent_id: nil).preload(children: { children: { children: :children } })
 
-    @articles_newest = @project.articles.newest(limit: summary_limit)
-    @articles_latest = @project.articles.recently_updated(limit: summary_limit)
-    @articles_popular = @project.articles.popular(limit: summary_limit)
-    @articles_toprated = @project.articles.top_rated(limit: summary_limit)
+    @articles_newest = @project.articles.newest(summary_limit)
+    @articles_latest = @project.articles.recently_updated(summary_limit)
+    @articles_popular = @project.articles.popular(summary_limit)
+    @articles_toprated = @project.articles.top_rated(summary_limit)
 
     @tags = @project.articles.tag_counts.sort { |a, b| a.name.downcase <=> b.name.downcase }
     @tags_hash = Hash[@project.articles.tag_counts.map { |tag| [tag.name.downcase, 1] }]
@@ -257,7 +255,7 @@ class ArticlesController < ApplicationController
       @previewed = @article
     end
     @text = params[:article].present? ? params[:article][:text] : params[:text]
-    render partial => 'common/preview'
+    render partial: 'common/preview'
   end
 
   def comment

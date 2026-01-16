@@ -1,6 +1,4 @@
 class CategoriesController < ApplicationController
-  unloadable
-
   menu_item :articles
   helper :knowledgebase
   include KnowledgebaseHelper

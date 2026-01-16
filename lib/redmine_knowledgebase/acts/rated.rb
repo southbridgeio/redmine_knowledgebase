@@ -34,7 +34,7 @@ module RedmineKnowledgebase #:nodoc:
     #
     # == Example of usage:
     #
-    #   class Book < ActiveRecord::Base
+    #   class Book < ApplicationRecord
     #     acts_as_rated
     #   end
     #
@@ -118,7 +118,7 @@ module RedmineKnowledgebase #:nodoc:
 
           unless Object.const_defined?(rating_class)
             Object.class_eval <<-EOV
-              class #{rating_class} < ActiveRecord::Base
+              class #{rating_class} < ApplicationRecord
                 belongs_to :rated, :polymorphic => true
                 #{options[:no_rater] ? '' : "belongs_to :rater, :class_name => #{rater_class}, :foreign_key => :rater_id"}
               end
@@ -127,7 +127,7 @@ module RedmineKnowledgebase #:nodoc:
 
           unless stats_class.nil? || Object.const_defined?(stats_class)
             Object.class_eval <<-EOV
-              class #{stats_class} < ActiveRecord::Base
+              class #{stats_class} < ApplicationRecord
                 belongs_to :rated, :polymorphic => true
               end
             EOV

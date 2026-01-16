@@ -1,5 +1,4 @@
-class KbArticle < ActiveRecord::Base
-  unloadable
+class KbArticle < ApplicationRecord
   include Redmine::SafeAttributes
 
   self.locking_column = 'version'
@@ -73,11 +72,11 @@ class KbArticle < ActiveRecord::Base
 
   has_many :comments, -> { order 'created_on DESC' }, :as => :commented, :dependent => :destroy
 
-  scope :newest, ->(limit:) { preload(:category).order('created_at DESC').limit(limit) }
+  scope :newest, ->(limit) { preload(:category).order('created_at DESC').limit(limit) }
 
-  scope :recently_updated, ->(limit:) { preload(:category).order('updated_at DESC').limit(limit) }
+  scope :recently_updated, ->(limit) { preload(:category).order('updated_at DESC').limit(limit) }
 
-  scope :popular, ->(limit:) do
+  scope :popular, ->(limit) do
     preload(:viewings)
       .preload(:category)
       .left_joins(:viewings)
@@ -87,7 +86,7 @@ class KbArticle < ActiveRecord::Base
       .limit(limit)
   end
 
-  scope :top_rated, ->(limit:) do
+  scope :top_rated, ->(limit) do
     preload(:ratings)
       .preload(:category)
       .left_joins(:ratings)
