@@ -1,25 +1,34 @@
-# Redmine Knowledgebase Plugin (Modernized & PRO Edition)
-
-[![Redmine 5.1 / 6.0 / 7.0+](https://img.shields.io/badge/Redmine-5.1%20%7C%206.0%20%7C%207.0%2B-blue.svg)](http://www.redmine.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+# Redmine Knowledgebase Plugin
 
 ![](screenshots/tiled-articles-201801.jpg "Screenshot of tiled view option.")
 
 ## Overview
 
-This plugin adds professional, enterprise-grade knowledgebase functionality to the [Redmine](http://www.redmine.org/) project management application.
+This plugin adds professional knowledgebase functionality to the [Redmine](http://www.redmine.org/) project management application.
 
-Originally authored by **Alex Bevilacqua** with contributions from **Southbridge** and the Redmine community. Modernized, enhanced, and maintained for **Redmine 5.1+, 6.0+, and 7.0+** by **Arean Narrayan** ([@Arean82](https://github.com/Arean82)).
+## Recent Changes
 
----
+* Tiled visual indexes are now supported using thumbnails.
+* Articles are better formatted to work with more themes.
+* Tag logic is improved and critical tags can be defined easily.
+* Email notifications are better formatted.
+* Bug fixes.
 
-## Compatibility
+## Warnings
 
-- **Redmine 7.0+ Compatibility**: Fully tested and compliant with Redmine 7.0+, Rails 7.1 / 8.0, Zeitwerk autoloading, and Ruby 3.2+ / 4.0+.
-- **Redmine 6.x & 5.1+ Compatibility**: Backward compatible with Redmine 6.0, 6.1, and 5.1 (Rails 6.1).
-- **Databases**: PostgreSQL, MySQL / MariaDB, SQLite3.
+This version of the plugin is adapted for Redmine 5.1 (Rails 6.1.7.6), Redmine 6.x, and Redmine 7.0+ and won't work on earlier Redmine versions.
 
----
+## Introduction
+
+[![Join the chat at https://gitter.im/alexbevi/redmine_knowledgebase](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/alexbevi/redmine_knowledgebase?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+<a href="http://www.packtpub.com/redmine-plugin-extension-and-development/book" target ="_blank">
+<img align="right" src="http://www.alexbevi.com/images/8748OS_mockupcover_normal_0.jpg" alt="Redmine Plugin Extension and Development">
+</a>
+
+[Redmine](http://www.redmine.org) is just plain awesome, and has proven to provide 90% of the functionality I need. The one feature that was missing was a usable knowledgebase component. I've looked at some of the open source solutions available, but couldn't find anything that fit my needs exactly. Seeing as Redmine is so easily extended, I figured why not create it for this platform instead of starting yet another project from scratch :P
+
+**SHAMELESS PLUG** This plugin is discussed in [Redmine Plugin Extension and Development](http://www.packtpub.com/redmine-plugin-extension-and-development/book), which is now available from Packt Publishing.
 
 ## Features
 
@@ -33,37 +42,18 @@ Originally authored by **Alex Bevilacqua** with contributions from **Southbridge
 * **Project-Based Permissions**: Granular roles and permissions controlling read, write, comment, rate, and category management.
 * **Redmine Core Quick Search Integration**: Articles are indexed and searchable via Redmine's global top-right search box.
 
----
+## Installation
 
-## Installation & Database Migration
+To install the knowledgebase, execute the following commands from the root of your redmine directory, assuming that your RAILS_ENV enviroment variable is set to "production":
 
-To install the knowledgebase, execute the following commands from the root of your Redmine installation (`/data/redmine`):
+    git clone git://github.com/southbridgeio/redmine_knowledgebase.git plugins/redmine_knowledgebase
+    bundle install
+    bundle exec rake redmine:plugins:migrate NAME=redmine_knowledgebase RAILS_ENV=production
 
-1. **Clone the plugin**:
-   ```bash
-   cd /data/redmine/plugins
-   git clone https://github.com/Arean82/redmine_knowledgebase.git
-   ```
+More information on installing Redmine plugins can be found here: [http://www.redmine.org/wiki/redmine/Plugins](http://www.redmine.org/wiki/redmine/Plugins "Redmine Plugins")
 
-2. **Install dependencies**:
-   ```bash
-   cd /data/redmine
-   bundle install --without development test
-   ```
-
-3. **Run database migrations**:
-   > [!IMPORTANT]
-   > Always run the migration command with `bundle exec` and `RAILS_ENV=production` to ensure all gem dependencies load in production mode:
-   ```bash
-   bundle exec rake redmine:plugins:migrate NAME=redmine_knowledgebase RAILS_ENV=production
-   ```
-
-4. **Restart Redmine**:
-   ```bash
-   touch tmp/restart.txt
-   # or
-   sudo systemctl restart redmine
-   ```
+After the plugin is installed and the db migration completed, you will
+need to restart Redmine for the plugin to be available.
 
 ### Updating from v2.3.0 (Should work for all 2.x versions but has not been tested)
 
@@ -73,7 +63,7 @@ Once those two directories have been removed, run the following commands (as tho
 
     git clone git://github.com/southbridgeio/redmine_knowledgebase.git plugins/redmine_knowledgebase
     bundle install
-    rake redmine:plugins:migrate NAME=redmine_knowledgebase
+    bundle exec rake redmine:plugins:migrate NAME=redmine_knowledgebase RAILS_ENV=production
 
 Upon restarting Redmine, the Knowledgebase entry will no longer appear as a [:top_menu](http://www.redmine.org/projects/redmine/wiki/Plugin_Tutorial#Extending-menus) entry.
 
@@ -98,104 +88,61 @@ This will produce a list similar to:
 If you want to move all existing categories to the above "Global" project, you could do this via:
 
 ```ruby
-rails runner "KbCategory.update_all(\"project_id = 5\")"
-rails runner "KbArticle.update_all(\"project_id = 5\")"
+rails runner "KbCategory.all.each { |c| c.project_id = 5; c.save }"
 ```
 
-### Uninstall
+And to move all articles to this project:
 
-    rake redmine:plugins:migrate NAME=redmine_knowledgebase VERSION=0
+```ruby
+rails runner "KbArticle.all.each { |a| a.project_id = 5; a.save }"
+```
 
-## User Guide
+### Upgrading an existing installation
 
-### Overview
+1.  Open a command line to the root of your Redmine directory
+2.  Update your Git copy:
 
-Once the Redmine Knowledgebase Plugin is installed, you will need to add the knowledgebase module to an existing or new project. Once you do so, there will be a Knowledgebase link in the Project menu bar.
+    git pull
 
-### Configuration
+3.  Update the database:
 
-To start using the Knowledgebase plugin, click on the Knowledgebase link
-in the Project menu bar.
+    bundle exec rake redmine:plugins:migrate NAME=redmine_knowledgebase RAILS_ENV=production
 
-This takes you to the Knowledgebase home page. Because no articles or categories exist,
-you will see this message: *"No categories have been created. Click Create Category to get started."*. To the
-right is a green circle with a plus (+) sign, and the link to create a new
-Category.
+4.  Restart Redmine
 
-Click on **Create Category**. This takes you to the Create Category page.
+## Usage
 
-* **Root Category** - since this is the first category, this is checked by
-  default. Root categories show in the right hand *Browse by Category*
-  sidebar.
+### Permissions
 
-* **Title** - give the new category a title relevant to your needs. This title
-  will show in the *Browse by Category* sidebar as a navigation link.
+Ensure that appropriate permissions have been established:
 
-* **Description** - provide a description of the category. This description
-  will show on the category main page.
+* **Administration** -> **Roles and permissions** -> **Permissions report**
+* Under the **Knowledgebase** heading, assign permissions to roles
 
-Click on **Create** to create the new category. You can edit this
-information again once the category is created by using the Edit link on
-the category main page.
+### Project Module
 
-The first category created is the parent category for all new
-categories.
+To enable the Knowledgebase for a project:
 
-You can continue to create as many new categories as needed, and add
-more new categories at any time. See *Using
-the Knowledgebase* for information on how to create sub-categories and add
-articles.
+* Go to **Project** -> **Settings** -> **Modules**
+* Check the box next to **Knowledgebase** and click **Save**
 
-Once you have added categories to the Knowledgebase, there will be a
-*Jump to Category* drop down menu on the Knowledgebase home page. You can
-use that to navigate to any category or sub-category. You can also
-navigate to categories (not sub-categories) by clicking on the category
-name in the right hand *Browse by Category* side bar.
+### Creating a Category
 
-### Using the Knowledgebase
+Categories can be created at the project or global level, depending on the permissions of the current user.
 
-Once you have created categories, you can then add articles and
-sub-categories.
+* Click on the **Knowledgebase** navigation tab.
+* In the right hand sidebar, click on **New Category**
+* Enter a title for the category, and a description.
+* Click on **Create**
 
-#### Creating Sub-categories
+### Creating an Article
 
-To create a sub-category, click on a root category in the right hand
-*Browse by Category* sidebar, or use the *Jump to Category* drop down menu
-from the Knowledgebase Home page.
+Articles are created at the category level.
 
-Once you are on the main page for that category, click on the **New
-Category** link on the right side of the page. This takes you to the
-*Create Category* page.
+* Open the Category that the article will belong to.
+* Click on **New Article** in the right hand sidebar.
 
-* **Root Category** - uncheck this box if you want this to be a sub-category
-
-* **Parent Category** - choose the relevant parent category from the drop down
-  menu. This option only appears if the *Root Category* checkbox is un-checked.
-
-* **Title** - give the new sub-category a title relevant to your needs.
-
-* **Description** - provide a description for the sub-category. This
-  description will appear on the sub-category main page.
-
-Click on **Create** to create the new sub-category. You can edit this
-information again by using the Edit link on the sub-category main page.
-
-You can have sub-categories of sub-categories.
-
-**NOTE** - sub-categories do not appear in the right hand *Browse by Category*
-side bar. Sub-categories only appear in the *Jump to Category* drop down
-menu on the Knowledgebase Home page, or in the category main pages.
-
-In the *Jump to Category* drop down menu, sub-categories are shown with a
-leading > , sub sub-categories with a leading >> , etc.
-
-
-#### Creating Articles
-
-To create an Article, click on the **Create Article** link on the home page, or navigate to a category or sub-category, and click
-on the **Create Article** link. This opens the *Create Article* page.
-
-* **Category** - select the category or sub-category from the drop down menu
+Fill in the following fields:
 
 * **Title** - give the article a relevant title
 
@@ -241,13 +188,12 @@ You can easily create links to articles and categories from issues or Wiki pages
 
 Now that categories and articles have been created, the home page of the Knowledgebase will show lists of *Recently Updated Articles*, *Most Popular Articles*, and *Top Rated Articles*. You can adjust permissions to enable users to view these lists, or change how many documents are displayed in these lists. You can use this page to help navigate the Knowledgebase, as well as using the *Jump to Category* drop down menu or the *Browse by Category* menu on the right of the screen. You can reach this page from anywhere inside the Knowledgebase by clicking on the Home link.
 
-### Authors & Attribution
+### About
 
-* **Original Authors & Historical Contributors**:
-  * Copyright (c) 2010-2016 **Alex Bevilacqua**, original author.
-  * Modifications (c) 2016-2018 **Rob Spearman**.
-  * Redmine 5 adaptation (c) 2018 **Southbridge**.
-  * Full historical contributor list in [AUTHORS](AUTHORS).
-* **Modernization & Redmine 7.0+ Architecture**:
-  * Upgraded, modernized, and maintained by **Arean Narrayan** ([@Arean82](https://github.com/Arean82), [arean@synorastudio.in](mailto:arean@synorastudio.in)).
-* **License**: Released under the MIT license. See [LICENSE](LICENSE) for details.
+* Released under the MIT license.  See LICENSE file.
+* Copyright (c) 2010-2016 Alex Bevilacqua, original author.
+* Modifications (c) 2016-2018 Rob Spearman.
+* Redmine 5 adaptation (c) 2018 Southbridge
+* Upgraded & modernized by Arean Narrayan (https://github.com/Arean82)
+
+This plugin would not be possible without the many contributions from the community. See [AUTHORS](https://github.com/alexbevi/redmine_knowledgebase/blob/master/AUTHORS) for the full list.
