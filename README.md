@@ -1,5 +1,9 @@
 # Redmine Knowledgebase Plugin
 
+[![Redmine 5.1 / 6.0 / 7.0+](https://img.shields.io/badge/Redmine-5.1%20%7C%206.0%20%7C%207.0%2B-blue.svg)](http://www.redmine.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Ruby 3.2 / 4.0+](https://img.shields.io/badge/Ruby-3.2%20%7C%204.0%2B-red.svg)](https://www.ruby-lang.org)
+
 ![](screenshots/tiled-articles-201801.jpg "Screenshot of tiled view option.")
 
 ## Overview
@@ -41,6 +45,9 @@ This version of the plugin is adapted for Redmine 5.1 (Rails 6.1.7.6), Redmine 6
 * **Visual Indexes with Thumbnails**: Grid or tiled visual overview for article indexes.
 * **Project-Based Permissions**: Granular roles and permissions controlling read, write, comment, rate, and category management.
 * **Redmine Core Quick Search Integration**: Articles are indexed and searchable via Redmine's global top-right search box.
+* **REST API Endpoints**: Full programmatic access (`.json` and `.xml`) for articles and categories.
+* **Global Top-Menu Overview**: Optional top-level navigation tab displaying knowledgebases across all projects.
+* **PDF Export**: Generate article PDF documents with formatted tables, attachments, and dynamic naming.
 
 ## Installation
 
