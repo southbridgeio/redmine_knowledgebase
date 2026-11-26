@@ -12,6 +12,20 @@
             <% end %>
         </ul>
         </div>
+        <% if redmine_knowledgebase_settings_value(:enable_pinned_articles) && @articles_pinned.present? && @articles_pinned.any? %>
+          <h3>&#128204; <%= l(:title_pinned_articles) %></h3>
+          <div class="articles index-summary">
+            <ul>
+              <% @articles_pinned.each do |art| %>
+                <li>
+                  <%= link_to art.title, project_article_path(@project, art) %>
+                  <span class="info" style="font-size:11px; color:#666;">(<%= art.category&.title %>)</span>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
         <% if User.current.allowed_to?(:view_recent_articles, @project) %>
           <h3><%= l(:title_recently_updated_articles) %></h3>
           <div class="articles index-summary">

@@ -7,6 +7,7 @@ class CategoriesController < ApplicationController
 
   before_action :find_project_by_project_id, :authorize
   before_action :get_category, :only => [:show, :edit, :update, :destroy, :index]
+  accept_api_auth :index, :show, :create, :update, :destroy
   respond_to?(:accept_atom_auth) ? accept_atom_auth(:show) : accept_rss_auth(:show)
 
   rescue_from ActiveRecord::RecordNotFound, :with => :force_404
@@ -19,6 +20,14 @@ class CategoriesController < ApplicationController
 
     respond_to do |format|
       format.html { render :template => 'categories/index', :layout => !request.xhr? }
+      format.api
+      format.json do
+        render json: {
+          categories: @project.categories.map do |c|
+            { id: c.id, title: c.title, description: c.description, parent_id: c.parent_id }
+          end
+        }
+      end
     end
 
   end
@@ -33,6 +42,18 @@ class CategoriesController < ApplicationController
 
     respond_to do |format|
       format.html { render :template => 'categories/show', :layout => !request.xhr? }
+      format.api
+      format.json do
+        render json: {
+          category: {
+            id: @category.id,
+            title: @category.title,
+            description: @category.description,
+            parent_id: @category.parent_id,
+            articles_count: @category.articles.count
+          }
+        }
+      end
       format.atom { render_feed(@articles, :title => "#{l(:knowledgebase_title)}: #{l(:label_category)}: #{@category.title}") }
     end
 
@@ -57,9 +78,17 @@ class CategoriesController < ApplicationController
       end
 
       flash[:notice] = l(:label_category_created, :title => @category.title)
-      redirect_to({ :action => 'show', :id => @category.id, :project_id => @project })
+      respond_to do |format|
+        format.html { redirect_to({ :action => 'show', :id => @category.id, :project_id => @project }) }
+        format.api  { render_api_ok }
+        format.json { render json: { category: { id: @category.id, title: @category.title, parent_id: @category.parent_id } }, status: :created }
+      end
     else
-      render(:action => 'new')
+      respond_to do |format|
+        format.html { render(:action => 'new') }
+        format.api  { render_validation_errors(@category) }
+        format.json { render json: { errors: @category.errors.full_messages }, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -85,7 +114,11 @@ class CategoriesController < ApplicationController
     else
       @category.destroy
       flash[:notice] = l(:label_category_deleted)
-      redirect_to({ :controller => :articles, :action => 'index', :project_id => @project})
+      respond_to do |format|
+        format.html { redirect_to({ :controller => :articles, :action => 'index', :project_id => @project}) }
+        format.api  { render_api_ok }
+        format.json { head :no_content }
+      end
     end
   end
 
@@ -99,9 +132,17 @@ class CategoriesController < ApplicationController
     @category.safe_attributes = params[:category]
     if @category.save
       flash[:notice] = l(:label_category_updated)
-      redirect_to({ :action => 'show', :id => @category.id, :project_id => @project })
+      respond_to do |format|
+        format.html { redirect_to({ :action => 'show', :id => @category.id, :project_id => @project }) }
+        format.api  { render_api_ok }
+        format.json { head :no_content }
+      end
     else
-      render :action => 'edit'
+      respond_to do |format|
+        format.html { render :action => 'edit' }
+        format.api  { render_validation_errors(@category) }
+        format.json { render json: { errors: @category.errors.full_messages }, status: :unprocessable_entity }
+      end
     end
   end
 

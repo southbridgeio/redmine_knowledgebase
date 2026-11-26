@@ -37,7 +37,8 @@ class KbArticle < ApplicationRecord
                   'updater_id',
                   'version_comments',
                   'version',
-                  'tag_list'
+                  'tag_list',
+                  'is_pinned'
 
 
   # Redmine 3.1.X
@@ -73,6 +74,7 @@ class KbArticle < ApplicationRecord
   has_many :comments, -> { order 'created_on DESC' }, :as => :commented, :dependent => :destroy
 
   scope :newest, ->(limit) { preload(:category).order('created_at DESC').limit(limit) }
+  scope :pinned, -> { where(is_pinned: true) }
 
   scope :recently_updated, ->(limit) { preload(:category).order('updated_at DESC').limit(limit) }
 
@@ -166,6 +168,31 @@ class KbArticle < ApplicationRecord
 
   def self.count_article_summaries
     KbArticle.where("summary is not null and summary <> ''").count
+  end
+
+  # Redmine Activity & Search result link provider methods
+  def event_title
+    "#{l(:label_article)} ##{id}: #{title}"
+  end
+
+  def event_description
+    summary.presence || content
+  end
+
+  def event_datetime
+    updated_at || created_at
+  end
+
+  def event_url(options = {})
+    { controller: 'articles', action: 'show', id: id, project_id: project }
+  end
+
+  def event_author
+    author
+  end
+
+  def event_type
+    'kb_articles'
   end
 
   class Version

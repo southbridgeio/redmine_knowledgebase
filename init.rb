@@ -9,11 +9,11 @@ ActiveRecord::Base.send :include, RedmineKnowledgebase::Acts::Taggable
 
 Redmine::Plugin.register :redmine_knowledgebase do
   name        'Knowledgebase'
-  author      'Alex Bevilacqua, Southbridge'
+  author      'Alex Bevilacqua, Southbridge; Upgraded & Modernized by Arean Narrayan'
   author_url  "http://www.alexbevi.com"
   description 'A plugin for Redmine that adds knowledgebase functionality'
   url         'https://github.com/southbridgeio/redmine_knowledgebase'
-  version     '5.1.0'
+  version     '5.2.0'
 
   requires_redmine :version_or_higher => '5.1.0'
 
@@ -86,5 +86,14 @@ Redmine::Plugin.register :redmine_knowledgebase do
   end
 
   menu :project_menu, :articles, { :controller => 'articles', :action => 'index' }, :caption => :knowledgebase_title, :after => :activity, :param => :project_id
+
+  menu :top_menu, :knowledgebase, { :controller => 'knowledgebase_overview', :action => 'index' },
+       :caption => :knowledgebase_title,
+       :after => :projects,
+       :if => Proc.new {
+         settings = Setting.plugin_redmine_knowledgebase
+         enabled = settings.is_a?(Hash) ? (settings[:show_in_top_menu].to_s != '0' && settings['show_in_top_menu'].to_s != '0') : true
+         enabled && User.current.logged? && Project.allowed_to(User.current, :view_kb_articles).any?
+       }
 
 end

@@ -1,0 +1,50 @@
+<div class="contextual">
+  <span class="badge badge-info"><%= @total_articles %> <%= l(:label_article_plural) %></span>
+  <span class="badge"><%= @total_categories %> <%= l(:label_category_plural) %></span>
+</div>
+
+<h2><%= l(:knowledgebase_title) %></h2>
+
+<div class="splitcontent">
+  <div class="splitcontentleft">
+    <div class="box">
+      <h3><%= l(:label_project_plural) %></h3>
+      <table class="list">
+        <thead>
+          <tr>
+            <th><%= l(:field_project) %></th>
+            <th><%= l(:label_category_plural) %></th>
+            <th><%= l(:label_article_plural) %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @projects.each do |prj| %>
+            <tr class="<%= cycle('odd', 'even') %>">
+              <td><strong><%= link_to prj.name, project_articles_path(prj) %></strong></td>
+              <td><%= prj.categories.count rescue 0 %></td>
+              <td><%= prj.articles.count rescue 0 %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="splitcontentright">
+    <div class="box">
+      <h3><%= l(:title_recent_articles) %></h3>
+      <% if @recent_articles.any? %>
+        <ul class="recent-articles-list">
+          <% @recent_articles.each do |art| %>
+            <li style="margin-bottom: 8px;">
+              <%= link_to art.title, project_article_path(art.project, art) %>
+              <span class="info" style="font-size:11px; color:#666;">(<%= art.project.name %> - <%= format_date(art.created_at) %>)</span>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="nodata"><%= l(:label_no_data) %></p>
+      <% end %>
+    </div>
+  </div>
+</div>

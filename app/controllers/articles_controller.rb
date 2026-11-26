@@ -10,6 +10,8 @@ class ArticlesController < ApplicationController
   before_action :get_article, :except => [:index, :new, :create, :preview, :comment, :tagged, :rate, :authored]
   before_action :find_attachments, :only => [:preview]
 
+  accept_api_auth :index, :show, :create, :update, :destroy
+
   rescue_from ActionView::MissingTemplate, :with => :force_404
   rescue_from ActiveRecord::RecordNotFound, :with => :force_404
 
@@ -33,9 +35,31 @@ class ArticlesController < ApplicationController
     @articles_latest = @project.articles.recently_updated(summary_limit)
     @articles_popular = @project.articles.popular(summary_limit)
     @articles_toprated = @project.articles.top_rated(summary_limit)
+    @articles_pinned = @project.articles.pinned.order('created_at DESC')
 
     @tags = @project.articles.tag_counts.sort { |a, b| a.name.downcase <=> b.name.downcase }
     @tags_hash = Hash[@project.articles.tag_counts.map { |tag| [tag.name.downcase, 1] }]
+
+    respond_to do |format|
+      format.html
+      format.api
+      format.json do
+        render json: {
+          articles: @project.articles.map do |a|
+            { id: a.id, title: a.title, summary: a.summary, category_id: a.category_id, author_id: a.author_id, is_pinned: a.is_pinned, created_at: a.created_at, updated_at: a.updated_at }
+          end
+        }
+      end
+      format.xml { render template: 'articles/index' }
+      format.csv do
+        csv_data = [["ID", "Title", "Category", "Author", "Views", "Created At", "Updated At"]]
+        @project.articles.preload(:category, :author).order('id DESC').each do |art|
+          csv_data << [art.id, art.title, art.category&.title, art.author&.name, art.view_count, art.created_at, art.updated_at]
+        end
+        csv_string = csv_data.map { |row| row.map { |col| "\"#{col.to_s.gsub('"', '""')}\"" }.join(',') }.join("\n")
+        send_data csv_string, type: 'text/csv; header=present; charset=utf-8', filename: "articles-#{@project.identifier}.csv"
+      end
+    end
   end
 
   def authored
@@ -101,10 +125,32 @@ class ArticlesController < ApplicationController
     if @article.save
       attachments = attach(@article, params[:attachments])
       flash[:notice] = l(:label_article_created, :title => @article.title)
-      redirect_to({ :action => 'show', :id => @article.id, :project_id => @project })
       KbMailer.article_create(User.current, @article).deliver
+      respond_to do |format|
+        format.html { redirect_to({ :action => 'show', :id => @article.id, :project_id => @project }) }
+        format.api  { render_api_ok }
+        format.json do
+          render json: {
+            article: {
+              id: @article.id,
+              project_id: @article.project_id,
+              category_id: @article.category_id,
+              title: @article.title,
+              summary: @article.summary,
+              content: @article.content,
+              author_id: @article.author_id,
+              created_at: @article.created_at,
+              updated_at: @article.updated_at
+            }
+          }, status: :created
+        end
+      end
     else
-      render(:action => 'new')
+      respond_to do |format|
+        format.html { render(:action => 'new') }
+        format.api  { render_validation_errors(@article) }
+        format.json { render json: { errors: @article.errors.full_messages }, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -117,8 +163,27 @@ class ArticlesController < ApplicationController
 
     respond_to do |format|
       format.html { render :template => 'articles/show', :layout => !request.xhr? }
+      format.api
+      format.json do
+        render json: {
+          article: {
+            id: @article.id,
+            project_id: @article.project_id,
+            category_id: @article.category_id,
+            title: @article.title,
+            summary: @article.summary,
+            content: @article.content,
+            author_id: @article.author_id,
+            created_at: @article.created_at,
+            updated_at: @article.updated_at
+          }
+        }
+      end
       format.atom { render_feed(@article, :title => "#{l(:label_article)}: #{@article.title}") }
-      format.pdf { send_data(article_to_pdf(@article, @project), :type => 'application/pdf', :filename => 'export.pdf') }
+      format.pdf do
+        filename = "article-#{@article.id}-#{@article.title.to_s.parameterize.presence || 'kb'}.pdf"
+        send_data(article_to_pdf(@article, @project), :type => 'application/pdf', :filename => filename)
+      end
     end
   end
 
@@ -174,11 +239,19 @@ class ArticlesController < ApplicationController
     if @article.save
       attach(@article, params[:attachments])
       flash[:notice] = l(:label_article_updated)
-      redirect_to(action: 'show', id: @article.id, project_id: @project)
       KbMailer.article_update(User.current, @article).deliver
+      respond_to do |format|
+        format.html { redirect_to(action: 'show', id: @article.id, project_id: @project) }
+        format.api  { render_api_ok }
+        format.json { head :no_content }
+      end
     else
       @tags = @project.articles.tag_counts
-      render(action: 'edit', id: @article.id)
+      respond_to do |format|
+        format.html { render(action: 'edit', id: @article.id) }
+        format.api  { render_validation_errors(@article) }
+        format.json { render json: { errors: @article.errors.full_messages }, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -222,7 +295,11 @@ class ArticlesController < ApplicationController
     KbMailer.article_destroy(User.current, @article).deliver
     @article.destroy
     flash[:notice] = l(:label_article_removed)
-    redirect_to({ :controller => 'articles', :action => 'index', :project_id => @project })
+    respond_to do |format|
+      format.html { redirect_to({ :controller => 'articles', :action => 'index', :project_id => @project }) }
+      format.api  { render_api_ok }
+      format.json { head :no_content }
+    end
   end
 
   def add_attachment

@@ -1,4 +1,6 @@
 RedmineApp::Application.routes.draw do
+	get 'knowledgebase', to: 'knowledgebase_overview#index', as: 'knowledgebase_overview'
+
 	scope "/projects/:project_id/knowledgebase" do
 		resources :categories, :via => [:get, :post]
 		get 'articles/:id/diff/:version/vs/:version_from', :controller => 'articles', :action => 'diff'

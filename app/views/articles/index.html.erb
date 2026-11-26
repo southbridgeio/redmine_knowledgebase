@@ -7,6 +7,7 @@
 
 <div class="contextual">
   <%= render :partial => "categories/jump_box" %>
+  <%= link_to 'CSV', project_articles_path(@project, format: :csv), class: 'icon icon-exp-csv', title: l(:label_export_csv) if @project.articles.any? %>
   <%= link_to_if_authorized l(:title_create_category), { :controller => 'categories', :action => 'new', :project_id => @project}, :class => 'icon icon-add' %>
   <% if @project.categories.length > 0 %>	
     <%= link_to_if_authorized l(:title_create_article), { :controller => 'articles', :action => 'new', :project_id => @project}, :class => 'icon icon-add' %>
