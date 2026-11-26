@@ -8,11 +8,11 @@ ActiveRecord::Base.send :include, RedmineKnowledgebase::Acts::Viewed
 ActiveRecord::Base.send :include, RedmineKnowledgebase::Acts::Taggable
 
 Redmine::Plugin.register :redmine_knowledgebase do
-  name        'Knowledgebase (Modernized Edition)'
+  name        'Knowledgebase'
   author      'Alex Bevilacqua, Southbridge; Upgraded & Modernized by Arean Narrayan'
-  author_url  'https://github.com/Arean82'
-  description 'Professional knowledgebase functionality for Redmine with categories, versioning, rating, tagging, attachments, and full Redmine 5.1+, 6.x, and 7.0+ compatibility.'
-  url         'https://github.com/Arean82/redmine_knowledgebase'
+  author_url  "http://www.alexbevi.com"
+  description 'A plugin for Redmine that adds knowledgebase functionality'
+  url         'https://github.com/southbridgeio/redmine_knowledgebase'
   version     '5.2.0'
 
   requires_redmine :version_or_higher => '5.1.0'
