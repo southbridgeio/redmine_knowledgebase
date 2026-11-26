@@ -1,60 +1,69 @@
-# Redmine Knowledgebase Plugin
+# Redmine Knowledgebase Plugin (Modernized & PRO Edition)
+
+[![Redmine 5.1 / 6.0 / 7.0+](https://img.shields.io/badge/Redmine-5.1%20%7C%206.0%20%7C%207.0%2B-blue.svg)](http://www.redmine.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ![](screenshots/tiled-articles-201801.jpg "Screenshot of tiled view option.")
 
 ## Overview
 
-This plugin adds professional knowledgebase functionality to the [Redmine](http://www.redmine.org/) project management application.
+This plugin adds professional, enterprise-grade knowledgebase functionality to the [Redmine](http://www.redmine.org/) project management application.
 
-## Recent Changes
+Originally authored by **Alex Bevilacqua** with contributions from **Southbridge** and the Redmine community. Modernized, enhanced, and maintained for **Redmine 5.1+, 6.0+, and 7.0+** by **Arean Narrayan** ([@Arean82](https://github.com/Arean82)).
 
-* Tiled visual indexes are now supported using thumbnails.
-* Articles are better formatted to work with more themes.
-* Tag logic is improved and critical tags can be defined easily.
-* Email notifications are better formatted.
-* Bug fixes.
+---
 
-## Warnings
+## Compatibility
 
-This version of the plugin is adapted for Redmine 5.1 (Rails 6.1.7.6) and won't work on earlier Redmine versions.
+- **Redmine 7.0+ Compatibility**: Fully tested and compliant with Redmine 7.0+, Rails 7.1 / 8.0, Zeitwerk autoloading, and Ruby 3.2+ / 4.0+.
+- **Redmine 6.x & 5.1+ Compatibility**: Backward compatible with Redmine 6.0, 6.1, and 5.1 (Rails 6.1).
+- **Databases**: PostgreSQL, MySQL / MariaDB, SQLite3.
 
-## Introduction
-
-[![Join the chat at https://gitter.im/alexbevi/redmine_knowledgebase](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/alexbevi/redmine_knowledgebase?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-<a href="http://www.packtpub.com/redmine-plugin-extension-and-development/book" target ="_blank">
-<img align="right" src="http://www.alexbevi.com/images/8748OS_mockupcover_normal_0.jpg" alt="Redmine Plugin Extension and Development">
-</a>
-
-[Redmine](http://www.redmine.org) is just plain awesome, and has proven to provide 90% of the functionality I need. The one feature that was missing was a usable knowledgebase component. I've looked at some of the open source solutions available, but couldn't find anything that fit my needs exactly. Seeing as Redmine is so easily extended, I figured why not create it for this platform instead of starting yet another project from scratch :P
-
-**SHAMELESS PLUG** This plugin is discussed in [Redmine Plugin Extension and Development](http://www.packtpub.com/redmine-plugin-extension-and-development/book), which is now available from Packt Publishing.
+---
 
 ## Features
 
-* Article versioning
-* View differences between versions
-* Email notifications and atom feeds
-* Categorization of articles
-* Article ratings
-* File attachments
-* Comment on articles
-* Article tagging
-* Visual indexes with thumbnails (optional)
-* Project-based permissions
+* **Article Versioning & Audit Trail**: Full revision tracking with side-by-side visual diffs and 1-click version rollback.
+* **Email Notifications & Atom Feeds**: Automatic notification emails to watchers upon article creation, modification, or comments.
+* **Hierarchical Categorization**: Unlimited nested categories with ordering and jump-to navigation.
+* **Article Ratings & Comments**: Community ratings and feedback discussions per article.
+* **File & Image Attachments**: Inline previews and document downloads.
+* **Article Tagging & Filtering**: Flexible tag clouds and tag-based filtering.
+* **Visual Indexes with Thumbnails**: Grid or tiled visual overview for article indexes.
+* **Project-Based Permissions**: Granular roles and permissions controlling read, write, comment, rate, and category management.
+* **Redmine Core Quick Search Integration**: Articles are indexed and searchable via Redmine's global top-right search box.
 
-## Installation
+---
 
-To install the knowledgebase, execute the following commands from the root of your redmine directory, assuming that your RAILS_ENV enviroment variable is set to "production":
+## Installation & Database Migration
 
-    git clone git://github.com/southbridgeio/redmine_knowledgebase.git plugins/redmine_knowledgebase
-    bundle install
-    rake redmine:plugins:migrate NAME=redmine_knowledgebase
+To install the knowledgebase, execute the following commands from the root of your Redmine installation (`/data/redmine`):
 
-More information on installing Redmine plugins can be found here: [http://www.redmine.org/wiki/redmine/Plugins](http://www.redmine.org/wiki/redmine/Plugins "Redmine Plugins")
+1. **Clone the plugin**:
+   ```bash
+   cd /data/redmine/plugins
+   git clone https://github.com/Arean82/redmine_knowledgebase.git
+   ```
 
-After the plugin is installed and the db migration completed, you will
-need to restart Redmine for the plugin to be available.
+2. **Install dependencies**:
+   ```bash
+   cd /data/redmine
+   bundle install --without development test
+   ```
+
+3. **Run database migrations**:
+   > [!IMPORTANT]
+   > Always run the migration command with `bundle exec` and `RAILS_ENV=production` to ensure all gem dependencies load in production mode:
+   ```bash
+   bundle exec rake redmine:plugins:migrate NAME=redmine_knowledgebase RAILS_ENV=production
+   ```
+
+4. **Restart Redmine**:
+   ```bash
+   touch tmp/restart.txt
+   # or
+   sudo systemctl restart redmine
+   ```
 
 ### Updating from v2.3.0 (Should work for all 2.x versions but has not been tested)
 
@@ -232,11 +241,13 @@ You can easily create links to articles and categories from issues or Wiki pages
 
 Now that categories and articles have been created, the home page of the Knowledgebase will show lists of *Recently Updated Articles*, *Most Popular Articles*, and *Top Rated Articles*. You can adjust permissions to enable users to view these lists, or change how many documents are displayed in these lists. You can use this page to help navigate the Knowledgebase, as well as using the *Jump to Category* drop down menu or the *Browse by Category* menu on the right of the screen. You can reach this page from anywhere inside the Knowledgebase by clicking on the Home link.
 
-### About
+### Authors & Attribution
 
-* Released under the MIT license.  See LICENSE file.
-* Copyright (c) 2010-2016 Alex Bevilacqua, original author.
-* Modifications (c) 2016-2018 Rob Spearman.
-* Redmine 5 adaptation (c) 2018 Southbridge
-
-This plugin would not be possible without the many contributions from the community. See [AUTHORS](https://github.com/alexbevi/redmine_knowledgebase/blob/master/AUTHORS) for the full list.
+* **Original Authors & Historical Contributors**:
+  * Copyright (c) 2010-2016 **Alex Bevilacqua**, original author.
+  * Modifications (c) 2016-2018 **Rob Spearman**.
+  * Redmine 5 adaptation (c) 2018 **Southbridge**.
+  * Full historical contributor list in [AUTHORS](AUTHORS).
+* **Modernization & Redmine 7.0+ Architecture**:
+  * Upgraded, modernized, and maintained by **Arean Narrayan** ([@Arean82](https://github.com/Arean82), [arean@synorastudio.in](mailto:arean@synorastudio.in)).
+* **License**: Released under the MIT license. See [LICENSE](LICENSE) for details.
