@@ -7,6 +7,7 @@ class CategoriesController < ApplicationController
 
   before_action :find_project_by_project_id, :authorize
   before_action :get_category, :only => [:show, :edit, :update, :destroy, :index]
+  accept_api_auth :index, :show, :create, :update, :destroy
   respond_to?(:accept_atom_auth) ? accept_atom_auth(:show) : accept_rss_auth(:show)
 
   rescue_from ActiveRecord::RecordNotFound, :with => :force_404
@@ -19,6 +20,14 @@ class CategoriesController < ApplicationController
 
     respond_to do |format|
       format.html { render :template => 'categories/index', :layout => !request.xhr? }
+      format.api
+      format.json do
+        render json: {
+          categories: @project.categories.map do |c|
+            { id: c.id, title: c.title, description: c.description, parent_id: c.parent_id }
+          end
+        }
+      end
     end
 
   end
@@ -33,6 +42,18 @@ class CategoriesController < ApplicationController
 
     respond_to do |format|
       format.html { render :template => 'categories/show', :layout => !request.xhr? }
+      format.api
+      format.json do
+        render json: {
+          category: {
+            id: @category.id,
+            title: @category.title,
+            description: @category.description,
+            parent_id: @category.parent_id,
+            articles_count: @category.articles.count
+          }
+        }
+      end
       format.atom { render_feed(@articles, :title => "#{l(:knowledgebase_title)}: #{l(:label_category)}: #{@category.title}") }
     end
 

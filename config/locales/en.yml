@@ -1,5 +1,6 @@
 --- 
 en: 
+  label_kb_show_in_top_menu: "Show Knowledgebase tab in top navigation menu?"
   articles_per_list_page: "Articles per list page?"
   allow_anon_access: "Allow anonymous access?"
   allow_sort_category_tree: "Sort the category tree alphabetically?"

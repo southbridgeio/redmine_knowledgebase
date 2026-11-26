@@ -1,4 +1,9 @@
 <p>
+  <%= label_tag :settings_show_in_top_menu, l(:label_kb_show_in_top_menu) %>
+  <%= check_box_tag 'settings[show_in_top_menu]', 1, @settings[:show_in_top_menu] != '0' && @settings[:show_in_top_menu] != false %>
+</p>
+
+<p>
   <%= label_tag :settings_sort_category_tree, l(:allow_sort_category_tree) %>
   <%= check_box_tag 'settings[sort_category_tree]', 1, @settings[:sort_category_tree] %>
 </p>

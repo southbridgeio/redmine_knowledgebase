@@ -10,6 +10,8 @@ class ArticlesController < ApplicationController
   before_action :get_article, :except => [:index, :new, :create, :preview, :comment, :tagged, :rate, :authored]
   before_action :find_attachments, :only => [:preview]
 
+  accept_api_auth :index, :show, :create, :update, :destroy
+
   rescue_from ActionView::MissingTemplate, :with => :force_404
   rescue_from ActiveRecord::RecordNotFound, :with => :force_404
 
@@ -36,6 +38,19 @@ class ArticlesController < ApplicationController
 
     @tags = @project.articles.tag_counts.sort { |a, b| a.name.downcase <=> b.name.downcase }
     @tags_hash = Hash[@project.articles.tag_counts.map { |tag| [tag.name.downcase, 1] }]
+
+    respond_to do |format|
+      format.html
+      format.api
+      format.json do
+        render json: {
+          articles: @project.articles.map do |a|
+            { id: a.id, title: a.title, summary: a.summary, category_id: a.category_id, author_id: a.author_id, created_at: a.created_at, updated_at: a.updated_at }
+          end
+        }
+      end
+      format.xml { render template: 'articles/index' }
+    end
   end
 
   def authored
@@ -117,8 +132,27 @@ class ArticlesController < ApplicationController
 
     respond_to do |format|
       format.html { render :template => 'articles/show', :layout => !request.xhr? }
+      format.api
+      format.json do
+        render json: {
+          article: {
+            id: @article.id,
+            project_id: @article.project_id,
+            category_id: @article.category_id,
+            title: @article.title,
+            summary: @article.summary,
+            content: @article.content,
+            author_id: @article.author_id,
+            created_at: @article.created_at,
+            updated_at: @article.updated_at
+          }
+        }
+      end
       format.atom { render_feed(@article, :title => "#{l(:label_article)}: #{@article.title}") }
-      format.pdf { send_data(article_to_pdf(@article, @project), :type => 'application/pdf', :filename => 'export.pdf') }
+      format.pdf do
+        filename = "article-#{@article.id}-#{@article.title.to_s.parameterize.presence || 'kb'}.pdf"
+        send_data(article_to_pdf(@article, @project), :type => 'application/pdf', :filename => filename)
+      end
     end
   end
 

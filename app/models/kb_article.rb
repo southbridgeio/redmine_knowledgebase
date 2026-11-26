@@ -168,6 +168,31 @@ class KbArticle < ApplicationRecord
     KbArticle.where("summary is not null and summary <> ''").count
   end
 
+  # Redmine Activity & Search result link provider methods
+  def event_title
+    "#{l(:label_article)} ##{id}: #{title}"
+  end
+
+  def event_description
+    summary.presence || content
+  end
+
+  def event_datetime
+    updated_at || created_at
+  end
+
+  def event_url(options = {})
+    { controller: 'articles', action: 'show', id: id, project_id: project }
+  end
+
+  def event_author
+    author
+  end
+
+  def event_type
+    'kb_articles'
+  end
+
   class Version
 
     belongs_to :author,   :class_name => 'User', :foreign_key => 'author_id'

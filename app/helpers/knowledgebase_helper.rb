@@ -70,7 +70,14 @@ module KnowledgebaseHelper
   end
 
   def article_to_pdf(article, project)
-    pdf = ITCPDF.new(current_language)
+    pdf_class = if defined?(Redmine::Export::PDF::ITCPDF)
+                  Redmine::Export::PDF::ITCPDF
+                elsif defined?(::ITCPDF)
+                  ::ITCPDF
+                else
+                  Redmine::Export::PDF::RDMPDF rescue nil
+                end
+    pdf = pdf_class.new(current_language)
     pdf.SetTitle("#{project} - #{article.title}")
     pdf.alias_nb_pages
     pdf.footer_date = format_date(Date.today)

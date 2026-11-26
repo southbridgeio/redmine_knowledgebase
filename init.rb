@@ -8,7 +8,7 @@ ActiveRecord::Base.send :include, RedmineKnowledgebase::Acts::Viewed
 ActiveRecord::Base.send :include, RedmineKnowledgebase::Acts::Taggable
 
 Redmine::Plugin.register :redmine_knowledgebase do
-  name        'Knowledgebase (Modernized & PRO Edition)'
+  name        'Knowledgebase (Modernized Edition)'
   author      'Alex Bevilacqua, Southbridge; Upgraded & Modernized by Arean Narrayan'
   author_url  'https://github.com/Arean82'
   description 'Professional knowledgebase functionality for Redmine with categories, versioning, rating, tagging, attachments, and full Redmine 5.1+, 6.x, and 7.0+ compatibility.'
@@ -86,5 +86,14 @@ Redmine::Plugin.register :redmine_knowledgebase do
   end
 
   menu :project_menu, :articles, { :controller => 'articles', :action => 'index' }, :caption => :knowledgebase_title, :after => :activity, :param => :project_id
+
+  menu :top_menu, :knowledgebase, { :controller => 'knowledgebase_overview', :action => 'index' },
+       :caption => :knowledgebase_title,
+       :after => :projects,
+       :if => Proc.new {
+         settings = Setting.plugin_redmine_knowledgebase
+         enabled = settings.is_a?(Hash) ? (settings[:show_in_top_menu].to_s != '0' && settings['show_in_top_menu'].to_s != '0') : true
+         enabled && User.current.logged? && Project.allowed_to(User.current, :view_kb_articles).any?
+       }
 
 end
