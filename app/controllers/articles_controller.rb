@@ -116,10 +116,32 @@ class ArticlesController < ApplicationController
     if @article.save
       attachments = attach(@article, params[:attachments])
       flash[:notice] = l(:label_article_created, :title => @article.title)
-      redirect_to({ :action => 'show', :id => @article.id, :project_id => @project })
       KbMailer.article_create(User.current, @article).deliver
+      respond_to do |format|
+        format.html { redirect_to({ :action => 'show', :id => @article.id, :project_id => @project }) }
+        format.api  { render_api_ok }
+        format.json do
+          render json: {
+            article: {
+              id: @article.id,
+              project_id: @article.project_id,
+              category_id: @article.category_id,
+              title: @article.title,
+              summary: @article.summary,
+              content: @article.content,
+              author_id: @article.author_id,
+              created_at: @article.created_at,
+              updated_at: @article.updated_at
+            }
+          }, status: :created
+        end
+      end
     else
-      render(:action => 'new')
+      respond_to do |format|
+        format.html { render(:action => 'new') }
+        format.api  { render_validation_errors(@article) }
+        format.json { render json: { errors: @article.errors.full_messages }, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -208,11 +230,19 @@ class ArticlesController < ApplicationController
     if @article.save
       attach(@article, params[:attachments])
       flash[:notice] = l(:label_article_updated)
-      redirect_to(action: 'show', id: @article.id, project_id: @project)
       KbMailer.article_update(User.current, @article).deliver
+      respond_to do |format|
+        format.html { redirect_to(action: 'show', id: @article.id, project_id: @project) }
+        format.api  { render_api_ok }
+        format.json { head :no_content }
+      end
     else
       @tags = @project.articles.tag_counts
-      render(action: 'edit', id: @article.id)
+      respond_to do |format|
+        format.html { render(action: 'edit', id: @article.id) }
+        format.api  { render_validation_errors(@article) }
+        format.json { render json: { errors: @article.errors.full_messages }, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -256,7 +286,11 @@ class ArticlesController < ApplicationController
     KbMailer.article_destroy(User.current, @article).deliver
     @article.destroy
     flash[:notice] = l(:label_article_removed)
-    redirect_to({ :controller => 'articles', :action => 'index', :project_id => @project })
+    respond_to do |format|
+      format.html { redirect_to({ :controller => 'articles', :action => 'index', :project_id => @project }) }
+      format.api  { render_api_ok }
+      format.json { head :no_content }
+    end
   end
 
   def add_attachment

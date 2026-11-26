@@ -78,9 +78,17 @@ class CategoriesController < ApplicationController
       end
 
       flash[:notice] = l(:label_category_created, :title => @category.title)
-      redirect_to({ :action => 'show', :id => @category.id, :project_id => @project })
+      respond_to do |format|
+        format.html { redirect_to({ :action => 'show', :id => @category.id, :project_id => @project }) }
+        format.api  { render_api_ok }
+        format.json { render json: { category: { id: @category.id, title: @category.title, parent_id: @category.parent_id } }, status: :created }
+      end
     else
-      render(:action => 'new')
+      respond_to do |format|
+        format.html { render(:action => 'new') }
+        format.api  { render_validation_errors(@category) }
+        format.json { render json: { errors: @category.errors.full_messages }, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -106,7 +114,11 @@ class CategoriesController < ApplicationController
     else
       @category.destroy
       flash[:notice] = l(:label_category_deleted)
-      redirect_to({ :controller => :articles, :action => 'index', :project_id => @project})
+      respond_to do |format|
+        format.html { redirect_to({ :controller => :articles, :action => 'index', :project_id => @project}) }
+        format.api  { render_api_ok }
+        format.json { head :no_content }
+      end
     end
   end
 
@@ -120,9 +132,17 @@ class CategoriesController < ApplicationController
     @category.safe_attributes = params[:category]
     if @category.save
       flash[:notice] = l(:label_category_updated)
-      redirect_to({ :action => 'show', :id => @category.id, :project_id => @project })
+      respond_to do |format|
+        format.html { redirect_to({ :action => 'show', :id => @category.id, :project_id => @project }) }
+        format.api  { render_api_ok }
+        format.json { head :no_content }
+      end
     else
-      render :action => 'edit'
+      respond_to do |format|
+        format.html { render :action => 'edit' }
+        format.api  { render_validation_errors(@category) }
+        format.json { render json: { errors: @category.errors.full_messages }, status: :unprocessable_entity }
+      end
     end
   end
 
