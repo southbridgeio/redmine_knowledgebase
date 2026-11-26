@@ -38,6 +38,14 @@
   <% unless section %>
     <p><%= f.text_field :tag_list, :size => 80, :value => "#{@article.tag_list.join(",")}" %></p>
 
+    <% if redmine_knowledgebase_settings_value(:enable_pinned_articles) %>
+      <p>
+        <label for="article_is_pinned"><%= l(:label_article_pinned) %></label>
+        <%= f.check_box :is_pinned %>
+        <em class="info"><%= l(:text_article_pinned_info) %></em>
+      </p>
+    <% end %>
+
     <p><%= f.text_field :version_comments, :size => 120, :label => l(:field_version_comments) %></p>
   <% end %>
 </div>

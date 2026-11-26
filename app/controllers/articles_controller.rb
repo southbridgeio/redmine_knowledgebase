@@ -35,6 +35,7 @@ class ArticlesController < ApplicationController
     @articles_latest = @project.articles.recently_updated(summary_limit)
     @articles_popular = @project.articles.popular(summary_limit)
     @articles_toprated = @project.articles.top_rated(summary_limit)
+    @articles_pinned = @project.articles.pinned.order('created_at DESC')
 
     @tags = @project.articles.tag_counts.sort { |a, b| a.name.downcase <=> b.name.downcase }
     @tags_hash = Hash[@project.articles.tag_counts.map { |tag| [tag.name.downcase, 1] }]
@@ -45,11 +46,19 @@ class ArticlesController < ApplicationController
       format.json do
         render json: {
           articles: @project.articles.map do |a|
-            { id: a.id, title: a.title, summary: a.summary, category_id: a.category_id, author_id: a.author_id, created_at: a.created_at, updated_at: a.updated_at }
+            { id: a.id, title: a.title, summary: a.summary, category_id: a.category_id, author_id: a.author_id, is_pinned: a.is_pinned, created_at: a.created_at, updated_at: a.updated_at }
           end
         }
       end
       format.xml { render template: 'articles/index' }
+      format.csv do
+        csv_data = [["ID", "Title", "Category", "Author", "Views", "Created At", "Updated At"]]
+        @project.articles.preload(:category, :author).order('id DESC').each do |art|
+          csv_data << [art.id, art.title, art.category&.title, art.author&.name, art.view_count, art.created_at, art.updated_at]
+        end
+        csv_string = csv_data.map { |row| row.map { |col| "\"#{col.to_s.gsub('"', '""')}\"" }.join(',') }.join("\n")
+        send_data csv_string, type: 'text/csv; header=present; charset=utf-8', filename: "articles-#{@project.identifier}.csv"
+      end
     end
   end
 

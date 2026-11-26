@@ -37,7 +37,8 @@ class KbArticle < ApplicationRecord
                   'updater_id',
                   'version_comments',
                   'version',
-                  'tag_list'
+                  'tag_list',
+                  'is_pinned'
 
 
   # Redmine 3.1.X
@@ -73,6 +74,7 @@ class KbArticle < ApplicationRecord
   has_many :comments, -> { order 'created_on DESC' }, :as => :commented, :dependent => :destroy
 
   scope :newest, ->(limit) { preload(:category).order('created_at DESC').limit(limit) }
+  scope :pinned, -> { where(is_pinned: true) }
 
   scope :recently_updated, ->(limit) { preload(:category).order('updated_at DESC').limit(limit) }
 

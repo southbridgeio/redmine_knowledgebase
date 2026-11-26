@@ -1,5 +1,10 @@
 --- 
 en: 
+  enable_pinned_articles: "Enable Featured/Pinned Articles?"
+  label_article_pinned: "Pin to Top (Featured)"
+  text_article_pinned_info: "Featured articles are highlighted and pinned to the top of knowledgebase overviews."
+  title_pinned_articles: "Featured / Pinned Articles"
+  label_export_csv: "Export as CSV"
   label_kb_show_in_top_menu: "Show Knowledgebase tab in top navigation menu?"
   articles_per_list_page: "Articles per list page?"
   allow_anon_access: "Allow anonymous access?"
